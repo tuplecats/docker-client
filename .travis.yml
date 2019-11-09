@@ -9,7 +9,7 @@ matrix:
   include:
     - rust: stable
     - rust: nightly
-    - rust: 1.30.0
+    - rust: beta
       script: cargo build
 
 script:
