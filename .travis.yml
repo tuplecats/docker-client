@@ -10,7 +10,6 @@ matrix:
     - rust: stable
     - rust: nightly
     - rust: beta
-      script: cargo build
 
 script:
   - cargo test
