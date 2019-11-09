@@ -17,6 +17,8 @@ script:
 
 addons:
   apt:
+    sources:
+      - docker
     packages:
       - docker-xenial
 
