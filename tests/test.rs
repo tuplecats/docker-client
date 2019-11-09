@@ -4,7 +4,7 @@ use docker_client::client::DockerClient;
 use docker_client::container::{Remover, Killer, Creator};
 
 fn client() -> DockerClient {
-    DockerClient::connect("/var/run/docker.sock".to_string()).unwrap()
+    DockerClient::connect("/var/run/docker.sock").unwrap()
 }
 
 #[test]

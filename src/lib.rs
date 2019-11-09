@@ -8,7 +8,7 @@
 /// ```
 /// use docker_client::client::DockerClient;
 /// fn main() {
-///     let client = match DockerClient::connect("/path/to/unix/socket") {
+///     let client = match DockerClient::connect("/var/run/docker.sock") {
 ///         Ok(client) => client,
 ///         Err(e) => panic!("Cannot connect to socket!"),
 ///     };
@@ -16,7 +16,7 @@
 ///     // Rename container
 ///     match client.rename_container("container-id", "new-container-name") {
 ///         Ok(()) => {},
-///         Err(_) => panic!("Cannot rename container!"),
+///         Err(e) => { dbg!(e); }
 ///     }
 /// }
 /// ```
