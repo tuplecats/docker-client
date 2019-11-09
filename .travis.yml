@@ -18,9 +18,9 @@ script:
 addons:
   apt:
     sources:
-      - docker
-    packages:
       - docker-xenial
+    packages:
+      - docker
 
 notifications:
   webhooks:
