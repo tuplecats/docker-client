@@ -13,7 +13,7 @@ pub struct DockerClient {
 
 #[derive(Deserialize, Debug)]
 pub struct ErrorMessage {
-    message: String
+    pub message: String
 }
 
 #[derive(Debug)]
@@ -39,6 +39,23 @@ pub struct FSChanges {
 
 impl DockerClient {
 
+    /// Connect to docker
+    ///
+    /// # Arguments
+    /// * `sock` - connection address
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use docker_client::client::DockerClient;
+    ///
+    /// fn main() {
+    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
+    ///         Ok(client) => client,
+    ///         Err(e) => panic!("Cannot connect to socket!"),
+    ///     };
+    /// }
+    /// ```
     pub fn connect<T>(sock: T) -> std::io::Result<DockerClient>
         where T: Into<String>
     {
@@ -47,6 +64,30 @@ impl DockerClient {
         })
     }
 
+    /// Create a container
+    ///
+    /// # Arguments
+    /// * `creator` is container to create.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use docker_client::client::DockerClient;
+    /// use docker_client::container::Creator;
+    ///
+    /// fn main() {
+    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
+    ///         Ok(client) => client,
+    ///         Err(e) => panic!("Cannot connect to socket!"),
+    ///     };
+    ///
+    ///     let creator = Creator::from("alpine").name(Some("test")).build();
+    ///     match client.create_container(creator) {
+    ///         Ok(_) => {},
+    ///         Err(_) => {}
+    ///     }
+    /// }
+    /// ```
     pub fn create_container(&self, creator: Creator) -> Result<CreatedContainer, DockerError> {
         let response = creator.to_request().send(self.stream.try_clone().unwrap());
 
@@ -60,6 +101,29 @@ impl DockerClient {
         }
     }
 
+    /// Returns which files in a container's filesystem have been added, deleted, or modified.
+    ///
+    /// # Arguments
+    /// * `id` - ID or name of the container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use docker_client::client::DockerClient;
+    ///
+    /// fn main() {
+    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
+    ///         Ok(client) => client,
+    ///         Err(e) => panic!("Cannot connect to socket!"),
+    ///     };
+    ///
+    ///     let changes = client.get_fs_changes("test").unwrap_or(Vec::new());
+    ///
+    ///     for change in &changes {
+    ///         println!("{:?}", change);
+    ///     }
+    /// }
+    /// ```
     pub fn get_fs_changes<T>(&self, id: T) -> Result<Vec<FSChanges>, DockerError>
         where T: Into<String> {
 
@@ -83,6 +147,36 @@ impl DockerClient {
         }
     }
 
+    /// Start a container.
+    ///
+    /// # Arguments
+    /// * `id` - ID or name of the container.
+    /// * `detach_keys` - The key sequence for detaching a container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use docker_client::client::{DockerClient, DockerError};
+    ///
+    /// fn main() {
+    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
+    ///         Ok(client) => client,
+    ///         Err(e) => panic!("Cannot connect to socket!"),
+    ///     };
+    ///
+    ///     match client.start_container("test", "-d") {
+    ///         Ok(_) => {},
+    ///         Err(e) => {
+    ///             match e {
+    ///                 DockerError::NotFound(e) => println!("{}", e.message),
+    ///                 DockerError::ServerError(e) => println!("{}", e.message),
+    ///                 _ => {}
+    ///             }
+    ///         },
+    ///     }
+    ///
+    /// }
+    /// ```
     pub fn start_container<T>(&self, id: T, detach_keys: T) -> Result<(), DockerError>
         where T: Into<String> {
 

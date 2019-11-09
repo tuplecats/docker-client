@@ -1,25 +1,37 @@
 #![deny(warnings, missing_debug_implementations)]
 
-/// # docker_client
-///
-/// docker_client is a client that use docker api
-///
-/// # Examples
-/// ```
-/// use docker_client::client::DockerClient;
-/// fn main() {
-///     let client = match DockerClient::connect("/var/run/docker.sock") {
-///         Ok(client) => client,
-///         Err(e) => panic!("Cannot connect to socket!"),
-///     };
-///
-///     // Rename container
-///     match client.rename_container("container-id", "new-container-name") {
-///         Ok(()) => {},
-///         Err(e) => { dbg!(e); }
-///     }
-/// }
-/// ```
+//! # docker_client
+//!
+//! `docker_client` is a client that use docker API. Current support API is 1.40.
+//!
+//! # Examples
+//!
+//! ```
+//! use docker_client::client::DockerClient;
+//! use docker_client::container::Creator;
+//!
+//! fn main() {
+//!     // Create docker client
+//!     let client = match DockerClient::connect("/var/run/docker.sock") {
+//!         Ok(client) => client,
+//!         Err(e) => panic!("Cannot connect to socket!"),
+//!     };
+//!
+//!     let creator = Creator::from("alpine").name(Some("test")).build();
+//!
+//!     // Create container
+//!     match client.create_container(creator) {
+//!         Ok(_) => {},
+//!         Err(_) => {}
+//!     };
+//!
+//!     // Rename container
+//!     match client.rename_container("test", "test1") {
+//!         Ok(_) => {},
+//!         Err(_) => {}
+//!     }
+//! }
+//! ```
 
 extern crate serde;
 extern crate serde_json;

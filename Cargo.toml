@@ -1,8 +1,10 @@
 [package]
 name = "docker_client"
-version = "0.1.0"
+version = "0.1.0-alpha1"
 authors = ["Nikolay Muravev <darkpaladin2000@gmail.com>"]
 edition = "2018"
+repository = "https://github.com/tuplecats/docker-client"
+documentation = "https://docs.rs/docker_client"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
