@@ -1,0 +1,18 @@
+language: rust
+sudo: false
+
+cache: cargo
+
+matrix:
+  include:
+    - rust: stable
+    - rust: nightly
+    - rust: 1.40.0
+      script: cargo build
+
+script:
+  - cargo test
+
+notifications:
+  webhooks:
+    - https://travis-tg.herokuapp.com/u/312348960/force
