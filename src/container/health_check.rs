@@ -1,4 +1,40 @@
-
+//!
+//! Health check types.
+//!
+//! The module provides [HealthCheckBuilder](struct.HealthCheckBuilder.html) and [HealthCheck](struct.HealthCheck.html) types
+//! used to create a support structure for `Creator` structure .
+//!
+//! # HealthCheckBuilder
+//! The [HealthCheckBuilder](struct.HealthCheckBuilder.html) provides a set of methods to create a structure [HealthCheck](struct.HealthCheck.html).
+//!
+//! # HealthCheck
+//! The [HealthCheck](struct.HealthCheck.html) is a helper structure for `Creator` structure.
+//!
+//! # Examples
+//!
+//! Kill container example.
+//! ```rust
+//! use docker_client::{DockerClient, Creator};
+//! use docker_client::container::HealthCheck;
+//!
+//! fn main() {
+//!     let client = match DockerClient::connect("/var/run/docker.sock") {
+//!         Ok(client) => client,
+//!         Err(e) => panic!("Cannot connect to socket!"),
+//!     };
+//!
+//!     let health_check = HealthCheck::new().test("echo test").build();
+//!
+//!     let creator = Creator::with_image("alpine")
+//!         .health_check(Some(health_check))
+//!         .build();
+//!
+//!     match client.create_container(creator) {
+//!         Ok(container) => { println!("{:?}", container); },
+//!         Err(_) => {},
+//!     }
+//! }
+//! ```
 use serde::Serialize;
 
 /// `HealthCheckBuilder` struct

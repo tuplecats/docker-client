@@ -7,13 +7,10 @@ use crate::http::Request;
 pub mod create;
 pub mod remove;
 pub mod kill;
-mod health_check;
-//pub mod inspector;
-//pub mod info;
+pub mod health_check;
 
 pub use health_check::HealthCheck;
-pub use create::CreatedContainer;
-pub use create::{CreatorBuilder, Creator};
+pub use create::{CreatedContainer, CreatorBuilder, Creator};
 pub use remove::{RemoverBuilder, Remover};
 pub use kill::{KillerBuilder, Killer};
 

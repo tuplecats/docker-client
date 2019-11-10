@@ -4,10 +4,10 @@
 //! The module provides [KillerBuilder](struct.KillerBuilder.html) and [Killer](struct.Killer.html) types
 //! used to create a support structure to kill a container.
 //!
-//! # CreatorBuilder
+//! # KillerBuilder
 //! The [KillerBuilder](struct.KillerBuilder.html) provides a set of methods to create a structure [Killer](struct.Killer.html).
 //!
-//! # Creator
+//! # Killer
 //! The [Killer](struct.Killer.html) is a helper structure for sending a request to kill a container.
 //!
 //! # API Documentaion

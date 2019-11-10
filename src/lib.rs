@@ -43,4 +43,4 @@ pub mod client;
 
 pub use client::DockerError;
 pub use client::DockerClient;
-pub use container::{Creator, Killer, Remover, CreatedContainer};
+pub use container::{Creator, Killer, Remover};

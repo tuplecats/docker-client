@@ -4,10 +4,10 @@
 //! The module provides [RemoverBuilder](struct.RemoverBuilder.html) and [Remover](struct.Remover.html) types
 //! used to create a support structure to remove a container.
 //!
-//! # CreatorBuilder
+//! # RemoverBuilder
 //! The [RemoverBuilder](struct.RemoverBuilder.html) provides a set of methods to create a structure [Remover](struct.Remover.html).
 //!
-//! # Creator
+//! # Remover
 //! The [Remover](struct.Remover.html) is a helper structure for sending a request to remove a container.
 //!
 //! # API Documentaion
