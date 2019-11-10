@@ -6,28 +6,44 @@ use serde::Deserialize;
 use crate::container::{Creator, Killer, Remover, CreatedContainer};
 use crate::http::{Request, URI};
 
+/// `DockerClient` struct.
 #[derive(Debug)]
 pub struct DockerClient {
     stream: UnixStream,
 }
 
+/// `ErrorMessage` struct.
 #[derive(Deserialize, Debug)]
 pub struct ErrorMessage {
     pub message: String
 }
 
+/// `DockerError` enum.
 #[derive(Debug)]
 pub enum DockerError {
+    /// Bad parameters (HTTP status is 401)
     BadParameters(ErrorMessage), // 401
+
+    /// Server error (HTTP status is 500)
     ServerError(ErrorMessage), // 500
+
+    /// Server error (HTTP status is 404)
     NotFound(ErrorMessage), // 404
+
+    /// Server error (HTTP status is 409)
     NotRunning(ErrorMessage), // 409
+
+    /// Server error (HTTP status is 304)
     AlreadyStarted(ErrorMessage), // 304
+
+    /// Server error (HTTP status is 409)
     ContainerExists(ErrorMessage), // 409
-    InvalidParameter(String),
+
+    /// Unknown staus
     UnknownStatus
 }
 
+/// `FSChanges` struct.
 #[derive(Deserialize, Debug)]
 pub struct FSChanges {
     #[serde(rename(deserialize = "Path"))]
@@ -47,7 +63,7 @@ impl DockerClient {
     /// # Examples
     ///
     /// ```rust
-    /// use docker_client::client::DockerClient;
+    /// use docker_client::DockerClient;
     ///
     /// fn main() {
     ///     let client = match DockerClient::connect("/var/run/docker.sock") {
@@ -72,7 +88,7 @@ impl DockerClient {
     /// # Examples
     ///
     /// ```rust
-    /// use docker_client::client::DockerClient;
+    /// use docker_client::DockerClient;
     /// use docker_client::container::Creator;
     ///
     /// fn main() {
@@ -81,7 +97,7 @@ impl DockerClient {
     ///         Err(e) => panic!("Cannot connect to socket!"),
     ///     };
     ///
-    ///     let creator = Creator::from("alpine").name(Some("test")).build();
+    ///     let creator = Creator::with_image("alpine").name(Some("test")).build();
     ///     match client.create_container(creator) {
     ///         Ok(_) => {},
     ///         Err(_) => {}
@@ -109,7 +125,7 @@ impl DockerClient {
     /// # Examples
     ///
     /// ```rust
-    /// use docker_client::client::DockerClient;
+    /// use docker_client::DockerClient;
     ///
     /// fn main() {
     ///     let client = match DockerClient::connect("/var/run/docker.sock") {
@@ -156,7 +172,7 @@ impl DockerClient {
     /// # Examples
     ///
     /// ```rust
-    /// use docker_client::client::{DockerClient, DockerError};
+    /// use docker_client::{DockerClient, DockerError};
     ///
     /// fn main() {
     ///     let client = match DockerClient::connect("/var/run/docker.sock") {
@@ -201,6 +217,36 @@ impl DockerClient {
         }
     }
 
+    /// Stop a container.
+    ///
+    /// # Arguments
+    /// * `id` - ID or name of the container.
+    /// * `wait` - Number of seconds to wait before killing the container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use docker_client::{DockerClient, DockerError};
+    ///
+    /// fn main() {
+    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
+    ///         Ok(client) => client,
+    ///         Err(e) => panic!("Cannot connect to socket!"),
+    ///     };
+    ///
+    ///     match client.stop_container("test", Some(12)) {
+    ///         Ok(_) => {},
+    ///         Err(e) => {
+    ///             match e {
+    ///                 DockerError::NotFound(e) => println!("{}", e.message),
+    ///                 DockerError::ServerError(e) => println!("{}", e.message),
+    ///                 _ => {}
+    ///             }
+    ///         },
+    ///     }
+    ///
+    /// }
+    /// ```
     pub fn stop_container<T>(&self, id: T, wait: Option<i32>) -> Result<(), DockerError>
         where T: Into<String> {
 
@@ -224,6 +270,35 @@ impl DockerClient {
         }
     }
 
+    /// Pause a container.
+    ///
+    /// # Arguments
+    /// * `id` - ID or name of the container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use docker_client::{DockerClient, DockerError};
+    ///
+    /// fn main() {
+    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
+    ///         Ok(client) => client,
+    ///         Err(e) => panic!("Cannot connect to socket!"),
+    ///     };
+    ///
+    ///     match client.pause_container("test") {
+    ///         Ok(_) => {},
+    ///         Err(e) => {
+    ///             match e {
+    ///                 DockerError::NotFound(e) => println!("{}", e.message),
+    ///                 DockerError::ServerError(e) => println!("{}", e.message),
+    ///                 _ => {}
+    ///             }
+    ///         },
+    ///     }
+    ///
+    /// }
+    /// ```
     pub fn pause_container<T>(&self, id: T) -> Result<(), DockerError>
         where T: Into<String> {
 
@@ -243,6 +318,35 @@ impl DockerClient {
 
     }
 
+    /// Unpause a container.
+    ///
+    /// # Arguments
+    /// * `id` - ID or name of the container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use docker_client::{DockerClient, DockerError};
+    ///
+    /// fn main() {
+    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
+    ///         Ok(client) => client,
+    ///         Err(e) => panic!("Cannot connect to socket!"),
+    ///     };
+    ///
+    ///     match client.unpause_container("test") {
+    ///         Ok(_) => {},
+    ///         Err(e) => {
+    ///             match e {
+    ///                 DockerError::NotFound(e) => println!("{}", e.message),
+    ///                 DockerError::ServerError(e) => println!("{}", e.message),
+    ///                 _ => {}
+    ///             }
+    ///         },
+    ///     }
+    ///
+    /// }
+    /// ```
     pub fn unpause_container<T>(&self, id: T) -> Result<(), DockerError>
         where T: Into<String> {
 
@@ -262,6 +366,37 @@ impl DockerClient {
 
     }
 
+    /// Rename a container.
+    ///
+    /// # Arguments
+    /// * `id` - ID or name of the container.
+    /// * `new_name` - New name for the container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use docker_client::{DockerClient, DockerError};
+    ///
+    /// fn main() {
+    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
+    ///         Ok(client) => client,
+    ///         Err(e) => panic!("Cannot connect to socket!"),
+    ///     };
+    ///
+    ///     match client.rename_container("test", "test1") {
+    ///         Ok(_) => {},
+    ///         Err(e) => {
+    ///             match e {
+    ///                 DockerError::NotFound(e) => println!("{}", e.message),
+    ///                 DockerError::ContainerExists(e) => println!("{}", e.message),
+    ///                 DockerError::ServerError(e) => println!("{}", e.message),
+    ///                 _ => {}
+    ///             }
+    ///         },
+    ///     }
+    ///
+    /// }
+    /// ```
     pub fn rename_container<T>(&self, id: T, new_name: T) -> Result<(), DockerError>
         where T: Into<String> {
 
@@ -283,6 +418,42 @@ impl DockerClient {
         }
     }
 
+    /// Kill a container.
+    ///
+    /// # Arguments
+    /// * `killer` is a struct with metadata to kill a container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use docker_client::{DockerClient, DockerError};
+    /// use docker_client::container::Killer;
+    ///
+    /// fn main() {
+    ///
+    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
+    ///         Ok(client) => client,
+    ///         Err(e) => panic!("Cannot connect to socket!"),
+    ///     };
+    ///
+    ///     let killer = Killer::new()
+    ///         .id("test")
+    ///         .build();
+    ///
+    ///     match client.kill_container(killer) {
+    ///         Ok(_) => {}
+    ///         Err(e) => {
+    ///             match e {
+    ///                 DockerError::NotFound(e) => println!("{}", e.message),
+    ///                 DockerError::NotRunning(e) => println!("{}", e.message),
+    ///                 DockerError::ServerError(e) => println!("{}", e.message),
+    ///                 _ => {}
+    ///             }
+    ///         }
+    ///     }
+    ///
+    /// }
+    /// ```
     pub fn kill_container(&self, killer: Killer) -> Result<(), DockerError> {
         let response = killer.to_request().send(self.stream.try_clone().unwrap());
 
@@ -295,6 +466,44 @@ impl DockerClient {
         }
     }
 
+    /// Remove a container.
+    ///
+    /// # Arguments
+    /// * `remover` is a struct with metadata to remove a container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use docker_client::{DockerClient, DockerError};
+    /// use docker_client::container::Remover;
+    ///
+    /// fn main() {
+    ///
+    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
+    ///         Ok(client) => client,
+    ///         Err(e) => panic!("Cannot connect to socket!"),
+    ///     };
+    ///
+    ///     let remover = Remover::new()
+    ///         .id("test")
+    ///         .with_remove_volumes(true)
+    ///         .build();
+    ///
+    ///     match client.remove_container(remover) {
+    ///         Ok(_) => {}
+    ///         Err(e) => {
+    ///             match e {
+    ///                 DockerError::BadParameters(e) => println!("{}", e.message),
+    ///                 DockerError::NotFound(e) => println!("{}", e.message),
+    ///                 DockerError::NotRunning(e) => println!("{}", e.message),
+    ///                 DockerError::ServerError(e) => println!("{}", e.message),
+    ///                 _ => {}
+    ///             }
+    ///         }
+    ///     }
+    ///
+    /// }
+    /// ```
     pub fn remove_container(&self, remover: Remover) -> Result<(), DockerError> {
         let response = remover.to_request().send(self.stream.try_clone().unwrap());
 

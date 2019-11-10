@@ -1,12 +1,14 @@
 use crate::container::{ToRequest};
 use crate::http::{Request, URI};
 
+/// KillerBuilder struct.
 #[derive(Debug, Default)]
 pub struct KillerBuilder {
     id: String,
     signal: Option<String>,
 }
 
+/// Killer struct.
 #[derive(Debug)]
 pub struct Killer {
     id: String,
@@ -14,12 +16,15 @@ pub struct Killer {
 }
 
 impl Killer {
+    /// Creates a new default instance of `KillerBuilder` to construct a `Killer`.
     pub fn new() -> KillerBuilder {
         KillerBuilder::default()
     }
 }
 
 impl KillerBuilder {
+
+    /// Set `id` of the `KillerBuilder`.
     pub fn id<T>(&mut self, id: T) -> &mut KillerBuilder
         where T: Into<String>
     {
@@ -29,6 +34,7 @@ impl KillerBuilder {
 
     }
 
+    /// Set `signal` of the `KillerBuilder`.
     pub fn signal<T>(&mut self, signal: T) -> &mut KillerBuilder
         where T: Into<Option<String>>
     {
@@ -37,6 +43,7 @@ impl KillerBuilder {
         self
     }
 
+    /// Build `Killer` from `KillerBuilder`
     pub fn build(&self) -> Killer {
         Killer {
             id: self.id.clone(),

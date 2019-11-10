@@ -1,6 +1,7 @@
 
 use serde::Serialize;
 
+/// `HealthCheckBuilder` struct
 #[derive(Debug, Default)]
 pub struct HealthCheckBuilder {
     test: Vec<String>,
@@ -10,6 +11,7 @@ pub struct HealthCheckBuilder {
     start_period: Option<u64>
 }
 
+/// `HealthCheck` struct.
 #[derive(Serialize, Debug, Clone)]
 pub struct HealthCheck {
 
@@ -30,10 +32,13 @@ pub struct HealthCheck {
 }
 
 impl HealthCheckBuilder {
+
+    /// Creates a new default instance of `HealthCheckBuilder` to construct a `HealthCheck`.
     pub fn new() -> Self {
         HealthCheckBuilder::default()
     }
 
+    /// Set test field of `HealthCheckBuilder`
     pub fn test<T>(&mut self, cmd: T) -> &mut Self
         where T: Into<String>
     {
@@ -42,30 +47,35 @@ impl HealthCheckBuilder {
         self
     }
 
+    /// Set interval field of `HealthCheckBuilder`
     pub fn interval(&mut self, interval: Option<u64>) -> &mut Self {
         self.interval = interval;
 
         self
     }
 
+    /// Set timeout field of `HealthCheckBuilder`
     pub fn timeout(&mut self, interval: Option<u64>) -> &mut Self {
         self.timeout = interval;
 
         self
     }
 
+    /// Set retries field of `HealthCheckBuilder`
     pub fn retries(&mut self, interval: Option<u64>) -> &mut Self {
         self.retries = interval;
 
         self
     }
 
+    /// Set start_period field of `HealthCheckBuilder`
     pub fn start_period(&mut self, interval: Option<u64>) -> &mut Self {
         self.start_period = interval;
 
         self
     }
 
+    /// Build `HealthCheck` from `HealthCheckBuilder`
     pub fn build(&self) -> HealthCheck {
         HealthCheck {
             test: self.test.clone(),
@@ -78,7 +88,10 @@ impl HealthCheckBuilder {
 }
 
 impl HealthCheck {
+
+    /// Creates a new default instance of `HealthCheckBuilder` to construct a `HealthCheck`.
     pub fn new() -> HealthCheckBuilder {
         HealthCheckBuilder::default()
     }
+
 }

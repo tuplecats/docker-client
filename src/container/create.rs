@@ -1,3 +1,39 @@
+//!
+//! Creator container types.
+//!
+//! The module provides [CreatorBuilder](struct.CreatorBuilder.html) and [Creator](struct.Creator.html) types
+//! used to create a support structure to create a container.
+//!
+//! # CreatorBuilder
+//! The [CreatorBuilder](struct.CreatorBuilder.html) provides a set of methods to create a structure [Creator](struct.Creator.html).
+//!
+//! # Creator
+//! The [Creator](struct.Creator.html) is a helper structure for sending a request to create a container.
+//!
+//! # Examples
+//!
+//! Create container example.
+//!```rust
+//! use docker_client::DockerClient;
+//! use docker_client::container::Creator;
+//!
+//! fn main() {
+//!     let client = match DockerClient::connect("/var/run/docker.sock") {
+//!         Ok(client) => client,
+//!         Err(e) => panic!("Cannot connect to socket!"),
+//!     };
+//!
+//!     let creator = Creator::with_image("alpine")
+//!         .name("test")
+//!         .build();
+//!
+//!     match client.create_container(creator) {
+//!         Ok(_) => {},
+//!         Err(_) => {},
+//!     }
+//! }
+//! ```
+
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use crate::http::{Request, URI};
@@ -7,6 +43,7 @@ use crate::container::health_check::HealthCheck;
 #[derive(Debug, Serialize, Clone)]
 struct EmptyObject;
 
+/// `CreatorBuilder` struct.
 #[derive(Debug, Default)]
 pub struct CreatorBuilder {
     name: Option<String>,
@@ -49,11 +86,16 @@ macro_rules! try_into_opt {
 }
 
 impl CreatorBuilder {
+
+    /// Creates a new default instance of `CreatorBuilder` to construct a `Creator`.
     pub fn new() -> Self {
         CreatorBuilder::default()
     }
 
-    pub fn from_image<T>(image: T) -> Self
+    /// Creates a new `CreatorBuilder` initialized with `image`.
+    //
+    // This method returns an instance of `CreatorBuilder` which can be used to create a `Creator`.
+    pub fn with_image<T>(image: T) -> Self
         where T: Into<String> {
 
         let mut builder = CreatorBuilder::new();
@@ -61,6 +103,7 @@ impl CreatorBuilder {
         builder
     }
 
+    /// Set name for this container.
     pub fn name<T>(&mut self, name: Option<T>) -> &mut Self
         where T: Into<String>
     {
@@ -69,6 +112,7 @@ impl CreatorBuilder {
         self
     }
 
+    /// Set hostname for this container.
     pub fn hostname<T>(&mut self, name: Option<T>) -> &mut Self
         where T: Into<String>
     {
@@ -77,6 +121,7 @@ impl CreatorBuilder {
         self
     }
 
+    /// Set domain name for this container.
     pub fn domain_name<T>(&mut self, name: Option<T>) -> &mut Self
         where T: Into<String>
     {
@@ -85,6 +130,7 @@ impl CreatorBuilder {
         self
     }
 
+    /// Set user for this container.
     pub fn user<T>(&mut self, name: Option<T>) -> &mut Self
         where T: Into<String>
     {
@@ -93,24 +139,28 @@ impl CreatorBuilder {
         self
     }
 
+    /// Set boolean flag `attach_stdin` for this container.
     pub fn attach_stdin(&mut self, b: Option<bool>) -> &mut Self {
         self.attach_stdin = b;
 
         self
     }
 
+    /// Set boolean flag `attach_stdout` for this container.
     pub fn attach_stdout(&mut self, b: Option<bool>) -> &mut Self {
         self.attach_stdout = b;
 
         self
     }
 
+    /// Set boolean flag `attach_stderr` for this container.
     pub fn attach_stderr(&mut self, b: Option<bool>) -> &mut Self {
         self.attach_stderr = b;
 
         self
     }
 
+    /// Expose port of container to this creator builder.
     pub fn expose_port<T>(&mut self, port: T) -> &mut Self
         where T: Into<String>
     {
@@ -119,24 +169,28 @@ impl CreatorBuilder {
         self
     }
 
+    /// Set boolean flag `tty` for this container.
     pub fn tty(&mut self, b: Option<bool>) -> &mut Self {
         self.tty = b;
 
         self
     }
 
+    /// Set boolean flag `open_stdin` for this container.
     pub fn open_stdin(&mut self, b: Option<bool>) -> &mut Self {
         self.open_stdin = b;
 
         self
     }
 
+    /// Set boolean flag `stdin_once` for this container.
     pub fn stdin_once(&mut self, b: Option<bool>) -> &mut Self {
         self.stdin_once = b;
 
         self
     }
 
+    /// Append environment variable for this container.
     pub fn env<T>(&mut self, env: T) -> &mut Self
         where T: Into<String>
     {
@@ -145,24 +199,32 @@ impl CreatorBuilder {
         self
     }
 
+    /// Append command for this container.
     pub fn cmd(&mut self, cmd: String) -> &mut Self {
         self.cmd.push(cmd);
 
         self
     }
 
+    /// Set `HealthCheck` for this container.
     pub fn health_check(&mut self, health_check: Option<HealthCheck>) -> &mut Self {
         self.health_check = health_check;
 
         self
     }
 
+    /// Set args escaped for this container.
+    ///
+    /// # Note
+    ///
+    /// Only for Windows.
     pub fn args_escaped(&mut self, b: Option<bool>) -> &mut Self {
         self.args_escaped = b;
 
         self
     }
 
+    /// Set image for this container.
     pub fn image<T>(&mut self, image: Option<T>) -> &mut Self
         where T: Into<String>
     {
@@ -171,12 +233,14 @@ impl CreatorBuilder {
         self
     }
 
+    /// Append volume for this container.
     pub fn volume(&mut self, volume: String) -> &mut Self {
         self.volumes.insert(volume, EmptyObject{});
 
         self
     }
 
+    /// Set work directory for this container.
     pub fn work_dir<T>(&mut self, work_dir: Option<T>) -> &mut Self
         where T: Into<String>
     {
@@ -185,6 +249,7 @@ impl CreatorBuilder {
         self
     }
 
+    /// Append entry point script.
     pub fn entry_point<T>(&mut self, entry_point: T) -> &mut Self
         where T: Into<String>
     {
@@ -193,12 +258,20 @@ impl CreatorBuilder {
         self
     }
 
+    /// Set flag `network_disabled` for this container.
+    ///
+    /// # Note
+    ///
+    /// * If `b` is `false` then network will enable.
+    /// * If `b` is `true` then network will disable.
+    /// * If `b` is `None` then look in [Docker API](https://docs.docker.com/engine/api/v1.40/#operation/ContainerCreate).
     pub fn network_disabled(&mut self, b: Option<bool>) -> &mut Self {
         self.network_disabled = b;
 
         self
     }
 
+    /// Set MAC address for this container.
     pub fn mac_address<T>(&mut self, mac_address: Option<T>) -> &mut Self
         where T: Into<String>
     {
@@ -207,18 +280,21 @@ impl CreatorBuilder {
         self
     }
 
+    /// Append on build script.
     pub fn on_build(&mut self, cmd: String) -> &mut Self {
         self.on_build.push(cmd);
 
         self
     }
 
+    /// Append label of container.
     pub fn label(&mut self, k: String, v: String) -> &mut Self {
         self.labels.insert(k, v);
 
         self
     }
 
+    /// Set stop signal.
     pub fn stop_signal<T>(&mut self, stop_signal: Option<T>) -> &mut Self
         where T: Into<String>
     {
@@ -227,18 +303,21 @@ impl CreatorBuilder {
         self
     }
 
+    /// Set stop timeout.
     pub fn stop_timeout(&mut self, time: Option<i32>) -> &mut Self {
         self.stop_timeout = time;
 
         self
     }
 
+    /// Append shell command.
     pub fn shell(&mut self, cmd: String) -> &mut Self {
         self.shell.push(cmd);
 
         self
     }
 
+    /// Build `Creator` from `CreatorBuilder`
     pub fn build(&self) -> Creator {
         Creator {
             name: self.name.clone(),
@@ -264,6 +343,7 @@ impl CreatorBuilder {
     }
 }
 
+/// A struct of metadata to create a container.
 #[derive(Debug, Serialize, Default)]
 pub struct Creator {
 
@@ -328,11 +408,15 @@ pub struct Creator {
 
 impl Creator {
 
+    /// Creates a new default instance of `CreatorBuilder` to construct a `Creator`.
     pub fn new() -> CreatorBuilder {
         CreatorBuilder::default()
     }
 
-    pub fn from<T>(image: T) -> CreatorBuilder
+    /// Creates a new `CreatorBuilder` initialized with `image`.
+    //
+    // This method returns an instance of `CreatorBuilder` which can be used to create a `Creator`.
+    pub fn with_image<T>(image: T) -> CreatorBuilder
         where T: Into<String>
     {
         let mut builder = CreatorBuilder::default();
@@ -357,6 +441,7 @@ impl ToRequest for Creator {
     }
 }
 
+/// Created container struct.
 #[derive(Deserialize, Debug)]
 pub struct CreatedContainer {
 
@@ -368,10 +453,12 @@ pub struct CreatedContainer {
 }
 
 impl CreatedContainer {
+    /// Return id.
     pub fn id(&self) -> String {
         self.id.clone()
     }
 
+    /// Return array of warnings.
     pub fn warnings(&self) -> Vec<String> {
         self.warnings.clone()
     }

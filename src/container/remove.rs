@@ -1,6 +1,7 @@
 use crate::container::{ToRequest};
 use crate::http::{Request, URI};
 
+/// Remover builder struct.
 #[derive(Debug, Default)]
 pub struct RemoverBuilder {
     id: String,
@@ -9,6 +10,7 @@ pub struct RemoverBuilder {
     link: Option<bool>
 }
 
+/// Remover struct.
 #[derive(Debug)]
 pub struct Remover {
     id: String,
@@ -19,12 +21,15 @@ pub struct Remover {
 
 
 impl Remover {
+    /// Creates a new default instance of `RemoverBuilder` to construct a `Remover`.
     pub fn new() -> RemoverBuilder {
         RemoverBuilder::default()
     }
 }
 
 impl RemoverBuilder {
+
+    /// Set `id` of the `RemoverBuilder`.
     pub fn id<T>(&mut self, id: T) -> &mut Self
         where T: Into<String>
     {
@@ -33,24 +38,28 @@ impl RemoverBuilder {
         self
     }
 
+    /// Set flag `v` of the `RemoverBuilder`.
     pub fn with_remove_volumes(&mut self, v: bool) -> &mut Self {
         self.v = Some(v);
 
         self
     }
 
+    /// Set flag `force` of the `RemoverBuilder`.
     pub fn with_force_delete(&mut self, v: bool) -> &mut Self {
         self.force = Some(v);
 
         self
     }
 
+    /// Set flag `link` of the `RemoverBuilder`.
     pub fn with_remove_link(&mut self, v: bool) -> &mut Self {
         self.link = Some(v);
 
         self
     }
 
+    /// Build `Remover` from `RemoverBuilder`.
     pub fn build(&self) -> Remover {
         Remover {
             id: self.id.clone(),

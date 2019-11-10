@@ -1,6 +1,6 @@
 extern crate docker_client;
 
-use docker_client::client::DockerClient;
+use docker_client::DockerClient;
 use docker_client::container::{Remover, Killer, Creator};
 
 fn client() -> DockerClient {
@@ -103,7 +103,7 @@ fn test_fs_changes() {
 fn test_create() {
     let client = client();
 
-    let creator = Creator::from("alpine")
+    let creator = Creator::with_image("alpine")
         .name(Some("trait"))
         .hostname(Some("localhost"))
         .domain_name(Some("www.ddd.com"))

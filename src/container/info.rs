@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+/* use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -127,4 +127,4 @@ pub struct ContainerInfo {
     #[serde(rename(deserialize = "NetworkSettings"))]
     network_settings: HashMap<String, HashMap<String, Network>>,
 }
-
+*/

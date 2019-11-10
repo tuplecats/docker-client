@@ -1,5 +1,5 @@
 #![deny(warnings, missing_debug_implementations)]
-
+#![deny(missing_docs)]
 //! # docker_client
 //!
 //! `docker_client` is a client that use docker API. Current support API is 1.40.
@@ -7,7 +7,7 @@
 //! # Examples
 //!
 //! ```
-//! use docker_client::client::DockerClient;
+//! use docker_client::DockerClient;
 //! use docker_client::container::Creator;
 //!
 //! fn main() {
@@ -17,7 +17,7 @@
 //!         Err(e) => panic!("Cannot connect to socket!"),
 //!     };
 //!
-//!     let creator = Creator::from("alpine").name(Some("test")).build();
+//!     let creator = Creator::with_image("alpine").name(Some("test")).build();
 //!
 //!     // Create container
 //!     match client.create_container(creator) {
@@ -39,5 +39,8 @@ extern crate unix_socket;
 
 mod http;
 pub mod container;
-pub mod client;
+mod client;
 mod converter;
+
+pub use client::DockerError;
+pub use client::DockerClient;
