@@ -39,6 +39,15 @@ impl HealthCheckBuilder {
     }
 
     /// Set test field of `HealthCheckBuilder`
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::HealthCheck;
+    /// let builder = HealthCheck::new()
+    ///     .test("test-command")
+    ///     .build();
+    /// ```
     pub fn test<T>(&mut self, cmd: T) -> &mut Self
         where T: Into<String>
     {
@@ -48,6 +57,15 @@ impl HealthCheckBuilder {
     }
 
     /// Set interval field of `HealthCheckBuilder`
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::HealthCheck;
+    /// let builder = HealthCheck::new()
+    ///     .interval(Some(1000))
+    ///     .build();
+    /// ```
     pub fn interval(&mut self, interval: Option<u64>) -> &mut Self {
         self.interval = interval;
 
@@ -55,6 +73,15 @@ impl HealthCheckBuilder {
     }
 
     /// Set timeout field of `HealthCheckBuilder`
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::HealthCheck;
+    /// let builder = HealthCheck::new()
+    ///     .timeout(Some(1000))
+    ///     .build();
+    /// ```
     pub fn timeout(&mut self, interval: Option<u64>) -> &mut Self {
         self.timeout = interval;
 
@@ -62,6 +89,15 @@ impl HealthCheckBuilder {
     }
 
     /// Set retries field of `HealthCheckBuilder`
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::HealthCheck;
+    /// let builder = HealthCheck::new()
+    ///     .retries(Some(3))
+    ///     .build();
+    /// ```
     pub fn retries(&mut self, interval: Option<u64>) -> &mut Self {
         self.retries = interval;
 
@@ -69,6 +105,15 @@ impl HealthCheckBuilder {
     }
 
     /// Set start_period field of `HealthCheckBuilder`
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::HealthCheck;
+    /// let builder = HealthCheck::new()
+    ///     .start_period(Some(1000))
+    ///     .build();
+    /// ```
     pub fn start_period(&mut self, interval: Option<u64>) -> &mut Self {
         self.start_period = interval;
 
@@ -76,6 +121,13 @@ impl HealthCheckBuilder {
     }
 
     /// Build `HealthCheck` from `HealthCheckBuilder`
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::HealthCheck;
+    /// let builder = HealthCheck::new().build();
+    /// ```
     pub fn build(&self) -> HealthCheck {
         HealthCheck {
             test: self.test.clone(),

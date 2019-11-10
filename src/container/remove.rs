@@ -70,7 +70,21 @@ impl Remover {
 
 impl RemoverBuilder {
 
+    /// Creates a new default instance of `RemoverBuilder` to construct a `Remover`.
+    pub fn new() -> Self {
+        RemoverBuilder::default()
+    }
+
     /// Set `id` of the `RemoverBuilder`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::RemoverBuilder;
+    /// let builder = RemoverBuilder::new()
+    ///     .id("container-id-or-name")
+    ///     .build();
+    /// ```
     pub fn id<T>(&mut self, id: T) -> &mut Self
         where T: Into<String>
     {
@@ -80,6 +94,15 @@ impl RemoverBuilder {
     }
 
     /// Set flag `v` of the `RemoverBuilder`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::RemoverBuilder;
+    /// let builder = RemoverBuilder::new()
+    ///     .with_remove_volumes(true)
+    ///     .build();
+    /// ```
     pub fn with_remove_volumes(&mut self, v: bool) -> &mut Self {
         self.v = Some(v);
 
@@ -87,6 +110,15 @@ impl RemoverBuilder {
     }
 
     /// Set flag `force` of the `RemoverBuilder`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::RemoverBuilder;
+    /// let builder = RemoverBuilder::new()
+    ///     .with_force_delete(true)
+    ///     .build();
+    /// ```
     pub fn with_force_delete(&mut self, v: bool) -> &mut Self {
         self.force = Some(v);
 
@@ -94,6 +126,13 @@ impl RemoverBuilder {
     }
 
     /// Set flag `link` of the `RemoverBuilder`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::RemoverBuilder;
+    /// let builder = RemoverBuilder::new().build();
+    /// ```
     pub fn with_remove_link(&mut self, v: bool) -> &mut Self {
         self.link = Some(v);
 
@@ -101,6 +140,15 @@ impl RemoverBuilder {
     }
 
     /// Build `Remover` from `RemoverBuilder`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::RemoverBuilder;
+    /// let builder = RemoverBuilder::new()
+    ///     .id("container-id-or-name")
+    ///     .build();
+    /// ```
     pub fn build(&self) -> Remover {
         Remover {
             id: self.id.clone(),

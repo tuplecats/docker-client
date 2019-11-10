@@ -17,7 +17,7 @@ fn main() {
     };
 
     let creator = Creator::with_image("alpine")
-        .name(Some("test"))
+        .name("test")
         .build();
 
 

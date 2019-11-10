@@ -29,6 +29,12 @@
 //!
 //!     let creator = Creator::with_image("alpine")
 //!         .name("test")
+//!         .mac_address("1A:2B:3C:4D:5E:6F")
+//!         .expose_port("22/tcp")
+//!         .hostname("example-hostname")
+//!         .domain_name("example-domainname")
+//!         .network_disabled(false)
+//!         .cmd("echo hi")
 //!         .build();
 //!
 //!     match client.create_container(creator) {
@@ -107,17 +113,34 @@ impl CreatorBuilder {
     }
 
     /// Creates a new `CreatorBuilder` initialized with `image`.
-    //
-    // This method returns an instance of `CreatorBuilder` which can be used to create a `Creator`.
+    ///
+    /// This method returns an instance of `CreatorBuilder` which can be used to create a `Creator`.
+    ///
+    /// # Examples
+    ///
+    /// Create a new `CreationBuilder` with image.
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("example-image").build();
+    /// ```
     pub fn with_image<T>(image: T) -> Self
-        where T: Into<String> {
-
+        where T: Into<String>
+    {
         let mut builder = CreatorBuilder::new();
         builder.image = Some(image.into());
         builder
     }
 
     /// Set name for this container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .name("example-name")
+    ///     .build();
+    /// ```
     pub fn name<T>(&mut self, name: T) -> &mut Self
         where T: Into<String>
     {
@@ -127,6 +150,15 @@ impl CreatorBuilder {
     }
 
     /// Set hostname for this container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .hostname("example-hostname")
+    ///     .build();
+    /// ```
     pub fn hostname<T>(&mut self, name: T) -> &mut Self
         where T: Into<String>
     {
@@ -136,6 +168,15 @@ impl CreatorBuilder {
     }
 
     /// Set domain name for this container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .domain_name("example-domainname")
+    ///     .build();
+    /// ```
     pub fn domain_name<T>(&mut self, name: T) -> &mut Self
         where T: Into<String>
     {
@@ -145,6 +186,15 @@ impl CreatorBuilder {
     }
 
     /// Set user for this container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .user("example-user")
+    ///     .build();
+    /// ```
     pub fn user<T>(&mut self, name: T) -> &mut Self
         where T: Into<String>
     {
@@ -154,6 +204,15 @@ impl CreatorBuilder {
     }
 
     /// Set boolean flag `attach_stdin` for this container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .attach_stdin(true)
+    ///     .build();
+    /// ```
     pub fn attach_stdin(&mut self, b: bool) -> &mut Self {
         self.attach_stdin = Some(b);
 
@@ -161,6 +220,15 @@ impl CreatorBuilder {
     }
 
     /// Set boolean flag `attach_stdout` for this container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .attach_stdout(true)
+    ///     .build();
+    /// ```
     pub fn attach_stdout(&mut self, b: bool) -> &mut Self {
         self.attach_stdout = Some(b);
 
@@ -168,6 +236,15 @@ impl CreatorBuilder {
     }
 
     /// Set boolean flag `attach_stderr` for this container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .attach_stderr(true)
+    ///     .build();
+    /// ```
     pub fn attach_stderr(&mut self, b: bool) -> &mut Self {
         self.attach_stderr = Some(b);
 
@@ -175,6 +252,15 @@ impl CreatorBuilder {
     }
 
     /// Expose port of container to this creator builder.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .expose_port("22/tcp")
+    ///     .build();
+    /// ```
     pub fn expose_port<T>(&mut self, port: T) -> &mut Self
         where T: Into<String>
     {
@@ -184,6 +270,15 @@ impl CreatorBuilder {
     }
 
     /// Set boolean flag `tty` for this container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .tty(true)
+    ///     .build();
+    /// ```
     pub fn tty(&mut self, b: bool) -> &mut Self {
         self.tty = Some(b);
 
@@ -191,6 +286,15 @@ impl CreatorBuilder {
     }
 
     /// Set boolean flag `open_stdin` for this container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .open_stdin(true)
+    ///     .build();
+    /// ```
     pub fn open_stdin(&mut self, b: bool) -> &mut Self {
         self.open_stdin = Some(b);
 
@@ -198,6 +302,15 @@ impl CreatorBuilder {
     }
 
     /// Set boolean flag `stdin_once` for this container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .stdin_once(true)
+    ///     .build();
+    /// ```
     pub fn stdin_once(&mut self, b: bool) -> &mut Self {
         self.stdin_once = Some(b);
 
@@ -205,6 +318,15 @@ impl CreatorBuilder {
     }
 
     /// Append environment variable for this container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .env("VAR=example-value")
+    ///     .build();
+    /// ```
     pub fn env<T>(&mut self, env: T) -> &mut Self
         where T: Into<String>
     {
@@ -214,8 +336,19 @@ impl CreatorBuilder {
     }
 
     /// Append command for this container.
-    pub fn cmd(&mut self, cmd: String) -> &mut Self {
-        self.cmd.push(cmd);
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .cmd("example-cmd")
+    ///     .build();
+    /// ```
+    pub fn cmd<T>(&mut self, cmd: T) -> &mut Self
+        where T: Into<String>
+    {
+        self.cmd.push(cmd.into());
 
         self
     }
@@ -239,6 +372,15 @@ impl CreatorBuilder {
     }
 
     /// Set image for this container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::new()
+    ///     .image("alpine")
+    ///     .build();
+    /// ```
     pub fn image<T>(&mut self, image: T) -> &mut Self
         where T: Into<String>
     {
@@ -248,13 +390,33 @@ impl CreatorBuilder {
     }
 
     /// Append volume for this container.
-    pub fn volume(&mut self, volume: String) -> &mut Self {
-        self.volumes.insert(volume, EmptyObject{});
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .volume("/path/to/volume")
+    ///     .build();
+    /// ```
+    pub fn volume<T>(&mut self, volume: T) -> &mut Self
+        where T: Into<String>
+    {
+        self.volumes.insert(volume.into(), EmptyObject{});
 
         self
     }
 
     /// Set work directory for this container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .work_dir("/path/to/work_dir")
+    ///     .build();
+    /// ```
     pub fn work_dir<T>(&mut self, work_dir: T) -> &mut Self
         where T: Into<String>
     {
@@ -264,6 +426,15 @@ impl CreatorBuilder {
     }
 
     /// Append entry point script.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .entry_point("example-entry-point")
+    ///     .build();
+    /// ```
     pub fn entry_point<T>(&mut self, entry_point: T) -> &mut Self
         where T: Into<String>
     {
@@ -278,6 +449,15 @@ impl CreatorBuilder {
     ///
     /// * If `b` is `false` then network will enable.
     /// * If `b` is `true` then network will disable.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .network_disabled(true)
+    ///     .build();
+    /// ```
     pub fn network_disabled(&mut self, b: bool) -> &mut Self {
         self.network_disabled = Some(b);
 
@@ -285,6 +465,15 @@ impl CreatorBuilder {
     }
 
     /// Set MAC address for this container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .mac_address("1A:2B:3C:4D:5E:6F")
+    ///     .build();
+    /// ```
     pub fn mac_address<T>(&mut self, mac_address: T) -> &mut Self
         where T: Into<String>
     {
@@ -294,20 +483,53 @@ impl CreatorBuilder {
     }
 
     /// Append on build script.
-    pub fn on_build(&mut self, cmd: String) -> &mut Self {
-        self.on_build.push(cmd);
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .on_build("command-on-build")
+    ///     .build();
+    /// ```
+    pub fn on_build<T>(&mut self, cmd: T) -> &mut Self
+        where T: Into<String>
+    {
+        self.on_build.push(cmd.into());
 
         self
     }
 
     /// Append label of container.
-    pub fn label(&mut self, k: String, v: String) -> &mut Self {
-        self.labels.insert(k, v);
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .label("example-label-key", "example-label-value")
+    ///     .build();
+    /// ```
+    pub fn label<T, U>(&mut self, k: T, v: U) -> &mut Self
+        where
+            T: Into<String>,
+            U: Into<String>
+    {
+        self.labels.insert(k.into(), v.into());
 
         self
     }
 
     /// Set stop signal.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .stop_signal("command")
+    ///     .build();
+    /// ```
     pub fn stop_signal<T>(&mut self, stop_signal: T) -> &mut Self
         where T: Into<String>
     {
@@ -317,6 +539,16 @@ impl CreatorBuilder {
     }
 
     /// Set stop timeout.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .stop_timeout(None)
+    ///     .stop_timeout(Some(100))
+    ///     .build();
+    /// ```
     pub fn stop_timeout(&mut self, time: Option<i32>) -> &mut Self {
         self.stop_timeout = time;
 
@@ -324,13 +556,32 @@ impl CreatorBuilder {
     }
 
     /// Append shell command.
-    pub fn shell(&mut self, cmd: String) -> &mut Self {
-        self.shell.push(cmd);
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine")
+    ///     .shell("shell-command")
+    ///     .shell("shell-command-1")
+    ///     .build();
+    /// ```
+    pub fn shell<T>(&mut self, cmd: T) -> &mut Self
+        where T: Into<String>
+    {
+        self.shell.push(cmd.into());
 
         self
     }
 
     /// Build `Creator` from `CreatorBuilder`
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::CreatorBuilder;
+    /// let builder = CreatorBuilder::with_image("alpine").build();
+    /// ```
     pub fn build(&self) -> Creator {
         Creator {
             name: self.name.clone(),

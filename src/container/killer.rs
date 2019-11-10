@@ -29,6 +29,7 @@
 //!
 //!     let killer = Killer::new()
 //!         .id("example-kill")
+//!         .signal("SIGNAL")
 //!         .build();
 //!
 //!     match client.kill_container(killer) {
@@ -79,7 +80,21 @@ impl Killer {
 
 impl KillerBuilder {
 
+    /// Creates a new default instance of `KillerBuilder` to construct a `Killer`.
+    pub fn new() -> Self {
+        KillerBuilder::default()
+    }
+
     /// Set `id` of the `KillerBuilder`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::KillerBuilder;
+    /// let builder = KillerBuilder::new()
+    ///     .id("example-id-or-name")
+    ///     .build();
+    /// ```
     pub fn id<T>(&mut self, id: T) -> &mut KillerBuilder
         where T: Into<String>
     {
@@ -89,6 +104,15 @@ impl KillerBuilder {
     }
 
     /// Set `signal` of the `KillerBuilder`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::KillerBuilder;
+    /// let builder = KillerBuilder::new()
+    ///     .signal("SIGNAL")
+    ///     .build();
+    /// ```
     pub fn signal<T>(&mut self, signal: T) -> &mut KillerBuilder
         where T: Into<String>
     {
@@ -98,6 +122,13 @@ impl KillerBuilder {
     }
 
     /// Build `Killer` from `KillerBuilder`
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::container::KillerBuilder;
+    /// let builder = KillerBuilder::new().build();
+    /// ```
     pub fn build(&self) -> Killer {
         Killer {
             id: self.id.clone(),
