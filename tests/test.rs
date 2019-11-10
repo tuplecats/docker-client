@@ -13,7 +13,8 @@ fn test_kill() {
 
     let killer = Killer::new()
         .id("123")
-        .signal(None)
+        .signal("SIGABORT")
+        .signal("dsdsd")
         .build();
 
     match client.kill_container(killer) {
@@ -104,10 +105,10 @@ fn test_create() {
     let client = client();
 
     let creator = Creator::with_image("alpine")
-        .name(Some("trait"))
-        .hostname(Some("localhost"))
-        .domain_name(Some("www.ddd.com"))
-        .network_disabled(Some(false))
+        .name("trait")
+        .hostname("localhost")
+        .domain_name("www.ddd.com")
+        .network_disabled(false)
         .entry_point("hello")
         .expose_port("22/tcp")
         .build();

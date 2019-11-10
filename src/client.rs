@@ -1,3 +1,16 @@
+//!
+//! Docker client module.
+//!
+//! The module provides [DockerClient](struct.DockerClient.html) type used to manage docker containers.
+//!
+//! # DockerClient
+//! The [DockerClient](struct.DockerClient.html) provides a set of methods to manage docker containers used docker API.
+//!
+//! # API Documentaion
+//!
+//! API documentaion available at [link](https://docs.docker.com/engine/api/v1.40/)
+//!
+
 use unix_socket::UnixStream;
 use serde_json as json;
 
@@ -15,6 +28,7 @@ pub struct DockerClient {
 /// `ErrorMessage` struct.
 #[derive(Deserialize, Debug)]
 pub struct ErrorMessage {
+    /// Error message get from response.
     pub message: String
 }
 
@@ -97,7 +111,7 @@ impl DockerClient {
     ///         Err(e) => panic!("Cannot connect to socket!"),
     ///     };
     ///
-    ///     let creator = Creator::with_image("alpine").name(Some("test")).build();
+    ///     let creator = Creator::with_image("alpine").name("test").build();
     ///     match client.create_container(creator) {
     ///         Ok(_) => {},
     ///         Err(_) => {}

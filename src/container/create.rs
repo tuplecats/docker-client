@@ -28,7 +28,7 @@
 //!     };
 //!
 //!     let creator = Creator::with_image("alpine")
-//!         .name(Some("test"))
+//!         .name("test")
 //!         .build();
 //!
 //!     match client.create_container(creator) {
@@ -59,8 +59,8 @@ struct EmptyObject;
 ///
 /// fn main() {
 ///     let builder = CreatorBuilder::with_image("alpine")
-///         .name(Some("example"))
-///         .hostname(Some("localhost"))
+///         .name("example")
+///         .hostname("localhost")
 ///         .expose_port("80/tcp")
 ///         .build();
 ///
@@ -99,15 +99,6 @@ pub struct CreatorBuilder {
     //network_config: Option<NetworkConfig>,
 }
 
-macro_rules! try_into_opt {
-    ($field:ident) => {
-        match $field {
-            Some(n) => Some(n.into()),
-            None => None,
-        }
-    }
-}
-
 impl CreatorBuilder {
 
     /// Creates a new default instance of `CreatorBuilder` to construct a `Creator`.
@@ -127,58 +118,58 @@ impl CreatorBuilder {
     }
 
     /// Set name for this container.
-    pub fn name<T>(&mut self, name: Option<T>) -> &mut Self
+    pub fn name<T>(&mut self, name: T) -> &mut Self
         where T: Into<String>
     {
-        self.name = try_into_opt!(name);
+        self.name = Some(name.into());
 
         self
     }
 
     /// Set hostname for this container.
-    pub fn hostname<T>(&mut self, name: Option<T>) -> &mut Self
+    pub fn hostname<T>(&mut self, name: T) -> &mut Self
         where T: Into<String>
     {
-        self.hostname = try_into_opt!(name);
+        self.hostname = Some(name.into());
 
         self
     }
 
     /// Set domain name for this container.
-    pub fn domain_name<T>(&mut self, name: Option<T>) -> &mut Self
+    pub fn domain_name<T>(&mut self, name: T) -> &mut Self
         where T: Into<String>
     {
-        self.domain_name = try_into_opt!(name);
+        self.domain_name = Some(name.into());
 
         self
     }
 
     /// Set user for this container.
-    pub fn user<T>(&mut self, name: Option<T>) -> &mut Self
+    pub fn user<T>(&mut self, name: T) -> &mut Self
         where T: Into<String>
     {
-        self.user = try_into_opt!(name);
+        self.user = Some(name.into());
 
         self
     }
 
     /// Set boolean flag `attach_stdin` for this container.
-    pub fn attach_stdin(&mut self, b: Option<bool>) -> &mut Self {
-        self.attach_stdin = b;
+    pub fn attach_stdin(&mut self, b: bool) -> &mut Self {
+        self.attach_stdin = Some(b);
 
         self
     }
 
     /// Set boolean flag `attach_stdout` for this container.
-    pub fn attach_stdout(&mut self, b: Option<bool>) -> &mut Self {
-        self.attach_stdout = b;
+    pub fn attach_stdout(&mut self, b: bool) -> &mut Self {
+        self.attach_stdout = Some(b);
 
         self
     }
 
     /// Set boolean flag `attach_stderr` for this container.
-    pub fn attach_stderr(&mut self, b: Option<bool>) -> &mut Self {
-        self.attach_stderr = b;
+    pub fn attach_stderr(&mut self, b: bool) -> &mut Self {
+        self.attach_stderr = Some(b);
 
         self
     }
@@ -193,22 +184,22 @@ impl CreatorBuilder {
     }
 
     /// Set boolean flag `tty` for this container.
-    pub fn tty(&mut self, b: Option<bool>) -> &mut Self {
-        self.tty = b;
+    pub fn tty(&mut self, b: bool) -> &mut Self {
+        self.tty = Some(b);
 
         self
     }
 
     /// Set boolean flag `open_stdin` for this container.
-    pub fn open_stdin(&mut self, b: Option<bool>) -> &mut Self {
-        self.open_stdin = b;
+    pub fn open_stdin(&mut self, b: bool) -> &mut Self {
+        self.open_stdin = Some(b);
 
         self
     }
 
     /// Set boolean flag `stdin_once` for this container.
-    pub fn stdin_once(&mut self, b: Option<bool>) -> &mut Self {
-        self.stdin_once = b;
+    pub fn stdin_once(&mut self, b: bool) -> &mut Self {
+        self.stdin_once = Some(b);
 
         self
     }
@@ -241,17 +232,17 @@ impl CreatorBuilder {
     /// # Note
     ///
     /// Only for Windows.
-    pub fn args_escaped(&mut self, b: Option<bool>) -> &mut Self {
-        self.args_escaped = b;
+    pub fn args_escaped(&mut self, b: bool) -> &mut Self {
+        self.args_escaped = Some(b);
 
         self
     }
 
     /// Set image for this container.
-    pub fn image<T>(&mut self, image: Option<T>) -> &mut Self
+    pub fn image<T>(&mut self, image: T) -> &mut Self
         where T: Into<String>
     {
-        self.image = try_into_opt!(image);
+        self.image = Some(image.into());
 
         self
     }
@@ -264,10 +255,10 @@ impl CreatorBuilder {
     }
 
     /// Set work directory for this container.
-    pub fn work_dir<T>(&mut self, work_dir: Option<T>) -> &mut Self
+    pub fn work_dir<T>(&mut self, work_dir: T) -> &mut Self
         where T: Into<String>
     {
-        self.work_dir = try_into_opt!(work_dir);
+        self.work_dir = Some(work_dir.into());
 
         self
     }
@@ -287,18 +278,17 @@ impl CreatorBuilder {
     ///
     /// * If `b` is `false` then network will enable.
     /// * If `b` is `true` then network will disable.
-    /// * If `b` is `None` then look in [Docker API](https://docs.docker.com/engine/api/v1.40/#operation/ContainerCreate).
-    pub fn network_disabled(&mut self, b: Option<bool>) -> &mut Self {
-        self.network_disabled = b;
+    pub fn network_disabled(&mut self, b: bool) -> &mut Self {
+        self.network_disabled = Some(b);
 
         self
     }
 
     /// Set MAC address for this container.
-    pub fn mac_address<T>(&mut self, mac_address: Option<T>) -> &mut Self
+    pub fn mac_address<T>(&mut self, mac_address: T) -> &mut Self
         where T: Into<String>
     {
-        self.mac_address = try_into_opt!(mac_address);
+        self.mac_address = Some(mac_address.into());
 
         self
     }
@@ -318,10 +308,10 @@ impl CreatorBuilder {
     }
 
     /// Set stop signal.
-    pub fn stop_signal<T>(&mut self, stop_signal: Option<T>) -> &mut Self
+    pub fn stop_signal<T>(&mut self, stop_signal: T) -> &mut Self
         where T: Into<String>
     {
-        self.stop_signal = try_into_opt!(stop_signal);
+        self.stop_signal = Some(stop_signal.into());
 
         self
     }

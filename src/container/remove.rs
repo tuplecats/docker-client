@@ -1,3 +1,44 @@
+//!
+//! Remove container types.
+//!
+//! The module provides [RemoverBuilder](struct.RemoverBuilder.html) and [Remover](struct.Remover.html) types
+//! used to create a support structure to remove a container.
+//!
+//! # CreatorBuilder
+//! The [RemoverBuilder](struct.RemoverBuilder.html) provides a set of methods to create a structure [Remover](struct.Remover.html).
+//!
+//! # Creator
+//! The [Remover](struct.Remover.html) is a helper structure for sending a request to remove a container.
+//!
+//! # API Documentaion
+//!
+//! API documentaion available at [link](https://docs.docker.com/engine/api/v1.40/#operation/ContainerDelete)
+//!
+//! # Examples
+//!
+//! Remove container example.
+//! ```rust
+//! use docker_client::DockerClient;
+//! use docker_client::Remover;
+//!
+//! fn main() {
+//!     let client = match DockerClient::connect("/var/run/docker.sock") {
+//!         Ok(client) => client,
+//!         Err(e) => panic!("Cannot connect to socket!"),
+//!     };
+//!
+//!     let remover = Remover::new()
+//!         .id("example-remove")
+//!         .build();
+//!
+//!     match client.remove_container(remover) {
+//!         Ok(_) => {},
+//!         Err(_) => {},
+//!     }
+//! }
+//! ```
+
+
 use crate::container::{ToRequest};
 use crate::http::{Request, URI};
 

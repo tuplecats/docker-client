@@ -5,8 +5,8 @@
 use crate::http::Request;
 
 pub mod create;
-mod remove;
-mod killer;
+pub mod remove;
+pub mod killer;
 mod health_check;
 //pub mod inspector;
 //pub mod info;

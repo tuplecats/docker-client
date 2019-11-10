@@ -17,7 +17,7 @@
 //!         Err(e) => panic!("Cannot connect to socket!"),
 //!     };
 //!
-//!     let creator = Creator::with_image("alpine").name(Some("test")).build();
+//!     let creator = Creator::with_image("alpine").name("test").build();
 //!
 //!     // Create container
 //!     match client.create_container(creator) {
@@ -39,8 +39,9 @@ extern crate unix_socket;
 
 mod http;
 pub mod container;
-mod client;
+pub mod client;
 mod converter;
 
 pub use client::DockerError;
 pub use client::DockerClient;
+pub use container::{Creator, Killer, Remover, CreatedContainer};

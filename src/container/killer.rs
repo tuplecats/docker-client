@@ -1,14 +1,57 @@
+//!
+//! Kill container types.
+//!
+//! The module provides [KillerBuilder](struct.KillerBuilder.html) and [Killer](struct.Killer.html) types
+//! used to create a support structure to kill a container.
+//!
+//! # CreatorBuilder
+//! The [KillerBuilder](struct.KillerBuilder.html) provides a set of methods to create a structure [Killer](struct.Killer.html).
+//!
+//! # Creator
+//! The [Killer](struct.Killer.html) is a helper structure for sending a request to kill a container.
+//!
+//! # API Documentaion
+//!
+//! API documentaion available at [link](https://docs.docker.com/engine/api/v1.40/#operation/ContainerKill)
+//!
+//! # Examples
+//!
+//! Kill container example.
+//! ```rust
+//! use docker_client::DockerClient;
+//! use docker_client::Killer;
+//!
+//! fn main() {
+//!     let client = match DockerClient::connect("/var/run/docker.sock") {
+//!         Ok(client) => client,
+//!         Err(e) => panic!("Cannot connect to socket!"),
+//!     };
+//!
+//!     let killer = Killer::new()
+//!         .id("example-kill")
+//!         .build();
+//!
+//!     match client.kill_container(killer) {
+//!         Ok(_) => {},
+//!         Err(_) => {},
+//!     }
+//! }
+//! ```
+
+
 use crate::container::{ToRequest};
 use crate::http::{Request, URI};
 
-/// KillerBuilder struct.
+/// A Killer builder.
+///
+/// This type can be used to construct an instance of `Killer` through a builder-like pattern.
 #[derive(Debug, Default)]
 pub struct KillerBuilder {
     id: String,
     signal: Option<String>,
 }
 
-/// Killer struct.
+/// Represents a Killer.
 #[derive(Debug)]
 pub struct Killer {
     id: String,
@@ -17,6 +60,18 @@ pub struct Killer {
 
 impl Killer {
     /// Creates a new default instance of `KillerBuilder` to construct a `Killer`.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # use docker_client::Killer;
+    ///
+    /// let killer = Killer::new()
+    ///     .id("example-id")
+    ///     .signal("some-signal")
+    ///     .build();
+    ///
+    /// ```
     pub fn new() -> KillerBuilder {
         KillerBuilder::default()
     }
@@ -31,14 +86,13 @@ impl KillerBuilder {
         self.id = id.into();
 
         self
-
     }
 
     /// Set `signal` of the `KillerBuilder`.
     pub fn signal<T>(&mut self, signal: T) -> &mut KillerBuilder
-        where T: Into<Option<String>>
+        where T: Into<String>
     {
-        self.signal = signal.into();
+        self.signal = Some(signal.into());
 
         self
     }
