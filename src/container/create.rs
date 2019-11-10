@@ -10,6 +10,10 @@
 //! # Creator
 //! The [Creator](struct.Creator.html) is a helper structure for sending a request to create a container.
 //!
+//! # API Documentaion
+//!
+//! API documentaion available at [link](https://docs.docker.com/engine/api/v1.40/#operation/ContainerCreate)
+//!
 //! # Examples
 //!
 //! Create container example.
@@ -24,7 +28,7 @@
 //!     };
 //!
 //!     let creator = Creator::with_image("alpine")
-//!         .name("test")
+//!         .name(Some("test"))
 //!         .build();
 //!
 //!     match client.create_container(creator) {
@@ -43,7 +47,26 @@ use crate::container::health_check::HealthCheck;
 #[derive(Debug, Serialize, Clone)]
 struct EmptyObject;
 
-/// `CreatorBuilder` struct.
+/// A `Creator` builder.
+///
+/// This type can be used to construct an instance `Creator` through a builder-like pattern.
+///
+/// # Examples
+///
+/// Construct a `Creator` example.
+/// ```rust
+/// use docker_client::container::CreatorBuilder;
+///
+/// fn main() {
+///     let builder = CreatorBuilder::with_image("alpine")
+///         .name(Some("example"))
+///         .hostname(Some("localhost"))
+///         .expose_port("80/tcp")
+///         .build();
+///
+///     println!("{:?}", builder);
+/// }
+/// ```
 #[derive(Debug, Default)]
 pub struct CreatorBuilder {
     name: Option<String>,
