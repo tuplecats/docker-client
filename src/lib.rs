@@ -40,7 +40,6 @@ extern crate unix_socket;
 mod http;
 pub mod container;
 pub mod client;
-mod converter;
 
 pub use client::DockerError;
 pub use client::DockerClient;
