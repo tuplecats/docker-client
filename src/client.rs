@@ -627,7 +627,6 @@ impl DockerClient {
             .unwrap();
 
         let response = self.execute(request);
-        std::fs::write("text.txt", response.body.clone()).unwrap();
 
         match response.status {
             200 => Ok(json::from_str(response.body.as_str()).unwrap()),
