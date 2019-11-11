@@ -29,11 +29,11 @@
 //! }
 //! ```
 
-#[cfg(doctest)]
+#[cfg(test)]
 #[macro_use]
 extern crate doc_comment;
 
-#[cfg(doctest)]
+#[cfg(test)]
 doctest!("../README.MD", another);
 
 extern crate serde;
