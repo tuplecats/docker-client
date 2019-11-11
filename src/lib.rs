@@ -8,19 +8,16 @@
 //!
 //! ```
 //! use docker_client::DockerClient;
-//! use docker_client::container::Creator;
+//! use docker_client::container::Config;
 //!
 //! fn main() {
 //!     // Create docker client
-//!     let client = match DockerClient::connect("/var/run/docker.sock") {
-//!         Ok(client) => client,
-//!         Err(e) => panic!("Cannot connect to socket!"),
-//!     };
+//!     let client = DockerClient::connect("/var/run/docker.sock");
 //!
-//!     let creator = Creator::with_image("alpine").name("test").build();
+//!     let config = Config::with_image("alpine").name("test").build();
 //!
 //!     // Create container
-//!     match client.create_container(creator) {
+//!     match client.create_container(config) {
 //!         Ok(_) => {},
 //!         Err(_) => {}
 //!     };
@@ -33,14 +30,26 @@
 //! }
 //! ```
 
+#![feature(cfg_doctest)]
+#[cfg(doctest)]
+#[macro_use]
+extern crate doc_comment;
+
+#[cfg(doctest)]
+doctest!("../README.MD", another);
+
 extern crate serde;
 extern crate serde_json;
 extern crate unix_socket;
+extern crate hyper;
+extern crate hyperlocal;
+extern crate futures;
+extern crate tokio;
+extern crate tokio_core;
 
-mod http;
 pub mod container;
 pub mod client;
 
 pub use client::DockerError;
 pub use client::DockerClient;
-pub use container::{Creator, Killer, Remover};
+pub use container::{Config, Killer, Remover};

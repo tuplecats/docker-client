@@ -2,40 +2,38 @@
 //! Health check types.
 //!
 //! The module provides [HealthCheckBuilder](struct.HealthCheckBuilder.html) and [HealthCheck](struct.HealthCheck.html) types
-//! used to create a support structure for `Creator` structure .
+//! used to create a support structure for `Config` structure .
 //!
 //! # HealthCheckBuilder
 //! The [HealthCheckBuilder](struct.HealthCheckBuilder.html) provides a set of methods to create a structure [HealthCheck](struct.HealthCheck.html).
 //!
 //! # HealthCheck
-//! The [HealthCheck](struct.HealthCheck.html) is a helper structure for `Creator` structure.
+//! The [HealthCheck](struct.HealthCheck.html) is a helper structure for `Config` structure.
 //!
 //! # Examples
 //!
 //! Kill container example.
 //! ```rust
-//! use docker_client::{DockerClient, Creator};
+//! use docker_client::{DockerClient, Config};
 //! use docker_client::container::HealthCheck;
 //!
 //! fn main() {
-//!     let client = match DockerClient::connect("/var/run/docker.sock") {
-//!         Ok(client) => client,
-//!         Err(e) => panic!("Cannot connect to socket!"),
-//!     };
+//!     let client = DockerClient::connect("/var/run/docker.sock");
 //!
 //!     let health_check = HealthCheck::new().test("echo test").build();
 //!
-//!     let creator = Creator::with_image("alpine")
+//!     let config = Config::with_image("alpine")
+//!         .name("name")
 //!         .health_check(Some(health_check))
 //!         .build();
 //!
-//!     match client.create_container(creator) {
+//!     match client.create_container(config) {
 //!         Ok(container) => { println!("{:?}", container); },
 //!         Err(_) => {},
 //!     }
 //! }
 //! ```
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 /// `HealthCheckBuilder` struct
 #[derive(Debug, Default)]
@@ -48,22 +46,22 @@ pub struct HealthCheckBuilder {
 }
 
 /// `HealthCheck` struct.
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct HealthCheck {
 
-    #[serde(skip_serializing_if = "Vec::is_empty", rename(serialize = "Test"))]
+    #[serde(skip_serializing_if = "Vec::is_empty", rename = "Test")]
     test: Vec<String>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "Interval"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "Interval")]
     interval: Option<u64>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "Timeout"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "Timeout")]
     timeout: Option<u64>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "Retries"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "Retries")]
     retries: Option<u64>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "StartPeriod"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "StartPeriod")]
     start_period: Option<u64>
 }
 

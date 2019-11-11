@@ -1,14 +1,14 @@
 //!
-//! Creator container types.
+//! Config container types.
 //!
-//! The module provides [CreatorBuilder](struct.CreatorBuilder.html) and [Creator](struct.Creator.html) types
+//! The module provides [ConfigBuilder](struct.ConfigBuilder.html) and [Config](struct.Config.html) types
 //! used to create a support structure to create a container.
 //!
-//! # CreatorBuilder
-//! The [CreatorBuilder](struct.CreatorBuilder.html) provides a set of methods to create a structure [Creator](struct.Creator.html).
+//! # ConfigBuilder
+//! The [ConfigBuilder](struct.ConfigBuilder.html) provides a set of methods to create a structure [Config](struct.Config.html).
 //!
-//! # Creator
-//! The [Creator](struct.Creator.html) is a helper structure for sending a request to create a container.
+//! # Config
+//! The [Config](struct.Config.html) is a helper structure for sending a request to create a container.
 //!
 //! # API Documentaion
 //!
@@ -19,15 +19,12 @@
 //! Create container example.
 //!```rust
 //! use docker_client::DockerClient;
-//! use docker_client::container::Creator;
+//! use docker_client::container::Config;
 //!
 //! fn main() {
-//!     let client = match DockerClient::connect("/var/run/docker.sock") {
-//!         Ok(client) => client,
-//!         Err(e) => panic!("Cannot connect to socket!"),
-//!     };
+//!     let client = DockerClient::connect("/var/run/docker.sock");
 //!
-//!     let creator = Creator::with_image("alpine")
+//!     let config = Config::with_image("alpine")
 //!         .name("test")
 //!         .mac_address("1A:2B:3C:4D:5E:6F")
 //!         .expose_port("22/tcp")
@@ -37,34 +34,32 @@
 //!         .cmd("echo hi")
 //!         .build();
 //!
-//!     match client.create_container(creator) {
+//!     match client.create_container(config) {
 //!         Ok(_) => {},
 //!         Err(_) => {},
 //!     }
 //! }
 //! ```
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Deserializer};
 use std::collections::HashMap;
-use crate::http::{Request, URI};
-use crate::container::ToRequest;
 use crate::container::health_check::HealthCheck;
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 struct EmptyObject;
 
-/// A `Creator` builder.
+/// A `Config` builder.
 ///
-/// This type can be used to construct an instance `Creator` through a builder-like pattern.
+/// This type can be used to construct an instance `Config` through a builder-like pattern.
 ///
 /// # Examples
 ///
-/// Construct a `Creator` example.
+/// Construct a `Config` example.
 /// ```rust
-/// use docker_client::container::CreatorBuilder;
+/// use docker_client::container::ConfigBuilder;
 ///
 /// fn main() {
-///     let builder = CreatorBuilder::with_image("alpine")
+///     let builder = ConfigBuilder::with_image("alpine")
 ///         .name("example")
 ///         .hostname("localhost")
 ///         .expose_port("80/tcp")
@@ -74,7 +69,7 @@ struct EmptyObject;
 /// }
 /// ```
 #[derive(Debug, Default)]
-pub struct CreatorBuilder {
+pub struct ConfigBuilder {
     name: Option<String>,
     hostname: Option<String>,
     domain_name: Option<String>,
@@ -105,28 +100,28 @@ pub struct CreatorBuilder {
     //network_config: Option<NetworkConfig>,
 }
 
-impl CreatorBuilder {
+impl ConfigBuilder {
 
-    /// Creates a new default instance of `CreatorBuilder` to construct a `Creator`.
+    /// Creates a new default instance of `ConfigBuilder` to construct a `Config`.
     pub fn new() -> Self {
-        CreatorBuilder::default()
+        ConfigBuilder::default()
     }
 
-    /// Creates a new `CreatorBuilder` initialized with `image`.
+    /// Creates a new `ConfigBuilder` initialized with `image`.
     ///
-    /// This method returns an instance of `CreatorBuilder` which can be used to create a `Creator`.
+    /// This method returns an instance of `ConfigBuilder` which can be used to create a `Config`.
     ///
     /// # Examples
     ///
     /// Create a new `CreationBuilder` with image.
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("example-image").build();
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("example-image").build();
     /// ```
     pub fn with_image<T>(image: T) -> Self
         where T: Into<String>
     {
-        let mut builder = CreatorBuilder::new();
+        let mut builder = ConfigBuilder::new();
         builder.image = Some(image.into());
         builder
     }
@@ -136,8 +131,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .name("example-name")
     ///     .build();
     /// ```
@@ -154,8 +149,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .hostname("example-hostname")
     ///     .build();
     /// ```
@@ -172,8 +167,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .domain_name("example-domainname")
     ///     .build();
     /// ```
@@ -190,8 +185,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .user("example-user")
     ///     .build();
     /// ```
@@ -208,8 +203,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .attach_stdin(true)
     ///     .build();
     /// ```
@@ -224,8 +219,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .attach_stdout(true)
     ///     .build();
     /// ```
@@ -240,8 +235,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .attach_stderr(true)
     ///     .build();
     /// ```
@@ -251,13 +246,13 @@ impl CreatorBuilder {
         self
     }
 
-    /// Expose port of container to this creator builder.
+    /// Expose port of container to this Config builder.
     ///
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .expose_port("22/tcp")
     ///     .build();
     /// ```
@@ -274,8 +269,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .tty(true)
     ///     .build();
     /// ```
@@ -290,8 +285,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .open_stdin(true)
     ///     .build();
     /// ```
@@ -306,8 +301,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .stdin_once(true)
     ///     .build();
     /// ```
@@ -322,8 +317,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .env("VAR=example-value")
     ///     .build();
     /// ```
@@ -340,8 +335,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .cmd("example-cmd")
     ///     .build();
     /// ```
@@ -376,8 +371,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::new()
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::new()
     ///     .image("alpine")
     ///     .build();
     /// ```
@@ -394,8 +389,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .volume("/path/to/volume")
     ///     .build();
     /// ```
@@ -412,8 +407,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .work_dir("/path/to/work_dir")
     ///     .build();
     /// ```
@@ -430,8 +425,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .entry_point("example-entry-point")
     ///     .build();
     /// ```
@@ -453,8 +448,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .network_disabled(true)
     ///     .build();
     /// ```
@@ -469,8 +464,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .mac_address("1A:2B:3C:4D:5E:6F")
     ///     .build();
     /// ```
@@ -487,8 +482,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .on_build("command-on-build")
     ///     .build();
     /// ```
@@ -505,8 +500,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .label("example-label-key", "example-label-value")
     ///     .build();
     /// ```
@@ -525,8 +520,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .stop_signal("command")
     ///     .build();
     /// ```
@@ -543,8 +538,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .stop_timeout(None)
     ///     .stop_timeout(Some(100))
     ///     .build();
@@ -560,8 +555,8 @@ impl CreatorBuilder {
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine")
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine")
     ///     .shell("shell-command")
     ///     .shell("shell-command-1")
     ///     .build();
@@ -574,16 +569,16 @@ impl CreatorBuilder {
         self
     }
 
-    /// Build `Creator` from `CreatorBuilder`
+    /// Build `Config` from `ConfigBuilder`
     ///
     /// # Examples
     ///
     /// ```rust
-    /// # use docker_client::container::CreatorBuilder;
-    /// let builder = CreatorBuilder::with_image("alpine").build();
+    /// # use docker_client::container::ConfigBuilder;
+    /// let builder = ConfigBuilder::with_image("alpine").build();
     /// ```
-    pub fn build(&self) -> Creator {
-        Creator {
+    pub fn build(&self) -> Config {
+        Config {
             name: self.name.clone(),
             hostname: self.hostname.clone(),
             domain_name: self.domain_name.clone(),
@@ -608,101 +603,98 @@ impl CreatorBuilder {
 }
 
 /// A struct of metadata to create a container.
-#[derive(Debug, Serialize, Default)]
-pub struct Creator {
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+pub struct Config {
 
-    #[serde(skip_serializing)]
+    #[serde(skip_serializing, skip_deserializing)]
     name: Option<String>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "Hostname"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "Hostname")]
     hostname: Option<String>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "Domainname"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "Domainname")]
     domain_name: Option<String>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "User"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "User")]
     user: Option<String>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "AttachStdin"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "AttachStdin")]
     attach_stdin: Option<bool>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "AttachStdout"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "AttachStdout")]
     attach_stdout: Option<bool>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "AttachStderr"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "AttachStderr")]
     attach_stderr: Option<bool>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "Tty"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "Tty")]
     tty: Option<bool>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "OpenStdin"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "OpenStdin")]
     open_stdin: Option<bool>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "StdinOnce"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "StdinOnce")]
     stdin_once: Option<bool>,
 
-    #[serde(skip_serializing_if = "Vec::is_empty", rename(serialize = "Env"))]
+    #[serde(skip_serializing_if = "Vec::is_empty", rename = "Env", deserialize_with = "nullable_priority_vec")]
     env: Vec<String>,
 
-    #[serde(skip_serializing_if = "HashMap::is_empty", rename(serialize = "Labels"))]
+    #[serde(skip_serializing_if = "HashMap::is_empty", rename = "Labels")]
     labels: HashMap<String, String>,
 
-    #[serde(skip_serializing_if = "Vec::is_empty", rename(serialize = "Cmd"))]
+    #[serde(skip_serializing_if = "Vec::is_empty", rename = "Cmd", deserialize_with = "nullable_priority_vec")]
     cmd: Vec<String>,
 
-    #[serde(skip_serializing_if = "Vec::is_empty", rename(serialize = "Entrypoint"))]
+    #[serde(skip_serializing_if = "Vec::is_empty", rename = "Entrypoint", deserialize_with = "nullable_priority_vec")]
     entry_point: Vec<String>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "Image"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "Image")]
     image: Option<String>,
 
-    #[serde(skip_serializing_if = "HashMap::is_empty", rename(serialize = "Volumes"))]
+    #[serde(skip_serializing_if = "HashMap::is_empty", rename = "Volumes", deserialize_with = "nullable_priority_hash")]
     volumes: HashMap<String, EmptyObject>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "Healthcheck"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "Healthcheck")]
     health_check: Option<HealthCheck>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "WorkingDir"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "WorkingDir")]
     work_dir: Option<String>,
 
-    #[serde(skip_serializing_if = "Option::is_none", rename(serialize = "NetworkDisabled"))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "NetworkDisabled")]
     network_disabled: Option<bool>,
 
 }
 
-impl Creator {
+impl Config {
 
-    /// Creates a new default instance of `CreatorBuilder` to construct a `Creator`.
-    pub fn new() -> CreatorBuilder {
-        CreatorBuilder::default()
+    /// Creates a new default instance of `ConfigBuilder` to construct a `Config`.
+    pub fn new() -> ConfigBuilder {
+        ConfigBuilder::default()
     }
 
-    /// Creates a new `CreatorBuilder` initialized with `image`.
+    /// Creates a new `ConfigBuilder` initialized with `image`.
     //
-    // This method returns an instance of `CreatorBuilder` which can be used to create a `Creator`.
-    pub fn with_image<T>(image: T) -> CreatorBuilder
+    // This method returns an instance of `ConfigBuilder` which can be used to create a `Config`.
+    pub fn with_image<T>(image: T) -> ConfigBuilder
         where T: Into<String>
     {
-        let mut builder = CreatorBuilder::default();
+        let mut builder = ConfigBuilder::default();
         builder.image = Some(image.into());
         builder
     }
 
-}
-
-impl ToRequest for Creator {
-    fn to_request(&self) -> Request {
-        let mut url = URI::with_path("/containers/create");
+    /// TODO: documentation
+    pub fn get_path(&self) -> String {
+        let mut path = format!("/containers/create?");
 
         if self.name.is_some() {
-            url.parameter("name", self.name.clone().unwrap().as_str());
+            path.push_str(format!("name={}&", self.name.clone().unwrap()).as_str());
         }
 
-        Request::post()
-            .url(url.build())
-            .content(serde_json::to_string(self).unwrap())
-            .build()
+        path.pop();
+        path
     }
+
 }
 
 /// Created container struct.
@@ -726,4 +718,18 @@ impl CreatedContainer {
     pub fn warnings(&self) -> Vec<String> {
         self.warnings.clone()
     }
+}
+
+fn nullable_priority_hash<'de, D>(deserializer: D) -> Result<HashMap<String, EmptyObject>, D::Error>
+    where D: Deserializer<'de>
+{
+    let opt = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or(Default::default()))
+}
+
+fn nullable_priority_vec<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+    where D: Deserializer<'de>
+{
+    let opt = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or(Vec::new()))
 }

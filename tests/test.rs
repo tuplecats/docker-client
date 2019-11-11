@@ -1,10 +1,10 @@
 extern crate docker_client;
 
-use docker_client::DockerClient;
-use docker_client::container::{Remover, Killer, Creator};
+use docker_client::{DockerClient};
+use docker_client::container::{Remover, Killer, Config, HealthCheck};
 
 fn client() -> DockerClient {
-    DockerClient::connect("/var/run/docker.sock").unwrap()
+    DockerClient::connect("/var/run/docker.sock")
 }
 
 #[test]
@@ -104,7 +104,7 @@ fn test_fs_changes() {
 fn test_create() {
     let client = client();
 
-    let creator = Creator::with_image("alpine")
+    let config = Config::with_image("alpine")
         .name("trait")
         .hostname("localhost")
         .domain_name("www.ddd.com")
@@ -114,8 +114,34 @@ fn test_create() {
         .build();
 
 
-    match client.create_container(creator) {
+    match client.create_container(config) {
         Ok(c) => {dbg!(c);},
-        Err(_) => {}
+        Err(e) => {dbg!(e);},
+    }
+}
+
+#[test]
+fn test_inspect_container() {
+    let client = client();
+
+    match client.inspect_container("test", true) {
+        Ok(c) => {dbg!(c);},
+        Err(e) => {dbg!(e);}
+    }
+ }
+
+#[test]
+fn test_health_check() {
+
+    let client = DockerClient::connect("/var/run/docker.sock");
+    let health_check = HealthCheck::new().test("echo test").build();
+    let config = Config::with_image("alpine")
+        .name("name")
+        .health_check(Some(health_check))
+        .build();
+
+    match client.create_container(config) {
+        Ok(container) => { println!("{:?}", container); },
+        Err(_) => {},
     }
 }

@@ -2,28 +2,38 @@
 
 [![Build Status](https://travis-ci.org/tuplecats/docker-client.svg?branch=0.1.0-alpha1)](https://travis-ci.org/tuplecats/docker-client)
 
+## Usage
+
+```toml
+[dependencies]
+docker_client = "0.1.0-alpha2"
+```
+
 ## Examples
 Create container example.
 
 ```rust
+extern crate docker_client;
+
 use docker_client::DockerClient;
-use docker_client::container::Creator;
+use docker_client::container::Config;
 
 fn main() {
 
-    let client = match DockerClient::connect("/var/run/docker.sock") {
-        Ok(client) => client,
-        Err(e) => panic!("Cannot connect to socket!"),
-    };
+    let client = DockerClient::connect("/var/run/docker.sock");
 
-    let creator = Creator::with_image("alpine")
+    let config = Config::with_image("alpine")
         .name("test")
         .build();
 
 
-    match client.create_container(creator) {
-        Ok(_) => {},
-        Err(_) => {}
+    match client.create_container(config) {
+        Ok(c) => {
+            println!("Container created: {:?}", c)
+        },
+        Err(e) => {
+            println!("Error {:?}", e)
+        }
     }
 
 }

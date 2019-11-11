@@ -22,10 +22,7 @@
 //! use docker_client::Remover;
 //!
 //! fn main() {
-//!     let client = match DockerClient::connect("/var/run/docker.sock") {
-//!         Ok(client) => client,
-//!         Err(e) => panic!("Cannot connect to socket!"),
-//!     };
+//!     let client = DockerClient::connect("/var/run/docker.sock");
 //!
 //!     let remover = Remover::new()
 //!         .id("example-remove")
@@ -37,10 +34,6 @@
 //!     }
 //! }
 //! ```
-
-
-use crate::container::{ToRequest};
-use crate::http::{Request, URI};
 
 /// Remover builder struct.
 #[derive(Debug, Default)]
@@ -65,6 +58,24 @@ impl Remover {
     /// Creates a new default instance of `RemoverBuilder` to construct a `Remover`.
     pub fn new() -> RemoverBuilder {
         RemoverBuilder::default()
+    }
+
+    /// TODO: documentation
+    pub fn get_path(&self) -> String {
+        let mut path = format!("/containers/{}/remove?", self.id);
+
+        if self.v.is_some() {
+            path.push_str(format!("v={}&", self.v.unwrap()).as_str());
+        }
+        if self.force.is_some() {
+            path.push_str(format!("force={}&", self.force.unwrap()).as_str());
+        }
+        if self.link.is_some() {
+            path.push_str(format!("link={}&", self.link.unwrap()).as_str());
+        }
+
+        path.pop();
+        path
     }
 }
 
@@ -157,28 +168,5 @@ impl RemoverBuilder {
             link: self.link
         }
     }
-}
 
-impl ToRequest for Remover {
-    fn to_request(&self) -> Request {
-
-        let url = format!("/containers/{}", self.id);
-
-        let mut uri = URI::with_path(url);
-
-        if self.v.is_some() {
-            uri.parameter("v".to_string(), self.v.unwrap().to_string());
-        }
-        if self.force.is_some() {
-            uri.parameter("force".to_string(), self.force.unwrap().to_string());
-        }
-        if self.link.is_some() {
-            uri.parameter("link".to_string(), self.link.unwrap().to_string());
-        }
-
-        Request::delete()
-            .url(uri.build())
-            .build()
-
-    }
 }

@@ -1,7 +1,11 @@
-/* use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+//!
+//! Info container types.
+//!
 
-#[derive(Debug, Serialize, Deserialize)]
+use serde::{Deserialize};
+use crate::Config;
+
+/*#[derive(Debug, Serialize, Deserialize)]
 pub struct Port {
     #[serde(rename(deserialize = "IP"))]
     ip: Option<String>,
@@ -14,10 +18,15 @@ pub struct Port {
 
     #[serde(rename(deserialize = "Type"))]
     protocol: Option<String>,
-}
+}*/
 
+/// Mounts information
 #[derive(Deserialize, Debug)]
 pub struct Mounts {
+
+    #[serde(rename(deserialize = "Type"))]
+    mount_type: Option<String>,
+
     #[serde(rename(deserialize = "Name"))]
     name: Option<String>,
 
@@ -40,6 +49,7 @@ pub struct Mounts {
     propagation: String
 }
 
+/*
 #[derive(Deserialize, Debug)]
 struct Network {
     #[serde(rename(deserialize = "IPAMConfig"))]
@@ -79,52 +89,107 @@ struct Network {
     mac_address: Option<String>,
 
 }
+*/
 
+/// State information
+#[derive(Deserialize, Debug)]
+pub struct State {
+    #[serde(rename(deserialize = "Status"))]
+    status: String,
+
+    #[serde(rename(deserialize = "Running"))]
+    running: bool,
+
+    #[serde(rename(deserialize = "Paused"))]
+    paused: bool,
+
+    #[serde(rename(deserialize = "Restarting"))]
+    restarting: bool,
+
+    #[serde(rename(deserialize = "OOMKilled"))]
+    oom_killed: bool,
+
+    #[serde(rename(deserialize = "Dead"))]
+    dead: bool,
+
+    #[serde(rename(deserialize = "Pid"))]
+    pid: i32,
+
+    #[serde(rename(deserialize = "ExitCode"))]
+    exit_code: i32,
+
+    #[serde(rename(deserialize = "Error"))]
+    error: String,
+
+    #[serde(rename(deserialize = "StartedAt"))]
+    started: String,
+
+    #[serde(rename(deserialize = "FinishedAt"))]
+    finished: String,
+
+}
+
+/// Container information
 #[derive(Deserialize, Debug)]
 pub struct ContainerInfo {
     #[serde(rename(deserialize = "Id"))]
     id: String,
 
-    #[serde(rename(deserialize = "Names"))]
-    names: Vec<String>,
+    #[serde(rename(deserialize = "Created"))]
+    created: String,
+
+    #[serde(rename(deserialize = "Path"))]
+    path: String,
+
+    #[serde(rename(deserialize = "Args"))]
+    args: Vec<String>,
+
+    #[serde(rename(deserialize = "State"))]
+    state: State,
 
     #[serde(rename(deserialize = "Image"))]
     image: String,
 
-    #[serde(rename(deserialize = "ImageID"))]
-    image_id: String,
+    #[serde(rename(deserialize = "ResolvConfPath"))]
+    resolve_conf_path: String,
 
-    #[serde(rename(deserialize = "Command"))]
-    command: String,
+    #[serde(rename(deserialize = "HostnamePath"))]
+    hostname_path: String,
 
-    #[serde(rename(deserialize = "Created"))]
-    created: i64,
+    #[serde(rename(deserialize = "HostsPath"))]
+    hosts_path: String,
 
-    #[serde(rename(deserialize = "State"))]
-    state: String,
+    #[serde(rename(deserialize = "LogPath"))]
+    log_path: String,
 
-    #[serde(rename(deserialize = "Status"))]
-    status: String,
+    #[serde(rename(deserialize = "Name"))]
+    name: String,
 
-    #[serde(rename(deserialize = "Ports"))]
-    ports: Vec<Port>,
+    #[serde(rename(deserialize = "RestartCount"))]
+    restart_count: i32,
 
-    #[serde(rename(deserialize = "Labels"))]
-    labels: HashMap<String, String>,
+    #[serde(rename(deserialize = "Driver"))]
+    driver: String,
+
+    #[serde(rename(deserialize = "MountLabel"))]
+    mount_label: String,
+
+    #[serde(rename(deserialize = "ProcessLabel"))]
+    process_label: String,
+
+    #[serde(rename(deserialize = "AppArmorProfile"))]
+    app_armor_profile: String,
+
+   // #[serde(rename(deserialize = "ExecIDs"))]
+   // exec_ids: Option<Vec<String>>,
 
     #[serde(rename(deserialize = "SizeRW"))]
-    size_rw: Option<i32>,
+    size_rw: Option<i64>,
 
     #[serde(rename(deserialize = "SizeRootFs"))]
-    size_root_fs: Option<i32>,
+    size_root_fs: Option<i64>,
 
-    #[serde(rename(deserialize = "HostConfig"))]
-    host_cfg: Option<HashMap<String, String>>,
-
-    #[serde(rename(deserialize = "Mounts"))]
-    mounts: Option<Vec<Mounts>>,
-
-    #[serde(rename(deserialize = "NetworkSettings"))]
-    network_settings: HashMap<String, HashMap<String, Network>>,
+    #[serde(rename(deserialize = "Config"))]
+    config: Config,
 }
-*/
+

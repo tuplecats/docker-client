@@ -11,18 +11,24 @@
 //! API documentaion available at [link](https://docs.docker.com/engine/api/v1.40/)
 //!
 
-use unix_socket::UnixStream;
+
 use serde_json as json;
 
-use crate::container::ToRequest;
 use serde::Deserialize;
-use crate::container::{Creator, Killer, Remover, CreatedContainer};
-use crate::http::{Request, URI};
+use crate::container::{Config, Killer, Remover, CreatedContainer};
+use hyper::{Client, Request};
+use hyper::rt::{Stream, Future};
+use hyperlocal::{UnixConnector, Uri};
+use tokio_core::reactor::Core;
+use tokio::prelude::stream::Concat2;
+use tokio::prelude::Async;
+use crate::container::info::ContainerInfo;
 
 /// `DockerClient` struct.
 #[derive(Debug)]
 pub struct DockerClient {
-    stream: UnixStream,
+    path: String,
+    client: Client<UnixConnector, hyper::Body>,
 }
 
 /// `ErrorMessage` struct.
@@ -67,6 +73,38 @@ pub struct FSChanges {
     kind: i32,
 }
 
+
+struct DockerFuture {
+    status: hyper::StatusCode,
+    body: Concat2<hyper::Body>,
+}
+
+#[derive(Clone)]
+struct DockerResponse {
+    status: u16,
+    body: String,
+}
+
+impl Future for DockerFuture {
+    type Item = DockerResponse;
+    type Error = hyper::Error;
+
+    fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
+        self.body.poll().map(|s| {
+            match s {
+                Async::NotReady => Ok(Async::<Self::Item>::NotReady),
+                Async::Ready(s) => {
+                    Ok(Async::Ready(DockerResponse{
+                        status: self.status.as_u16(),
+                        body: std::str::from_utf8(&s).unwrap_or("").to_string(),
+                    }))
+                },
+                //_ => Ok(Async::<Self::Item>::NotReady),
+            }
+        }).unwrap()
+    }
+}
+
 impl DockerClient {
 
     /// Connect to docker
@@ -80,46 +118,74 @@ impl DockerClient {
     /// use docker_client::DockerClient;
     ///
     /// fn main() {
-    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
-    ///         Ok(client) => client,
-    ///         Err(e) => panic!("Cannot connect to socket!"),
-    ///     };
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
     /// }
     /// ```
-    pub fn connect<T>(sock: T) -> std::io::Result<DockerClient>
+    pub fn connect<T>(path: T) -> DockerClient
         where T: Into<String>
     {
-        Ok(DockerClient {
-            stream: UnixStream::connect(sock.into())?
-        })
+        DockerClient {
+            path: path.into(),
+            client: Client::builder()
+                .keep_alive(false)
+                .build::<_, hyper::Body>(UnixConnector::new()),
+        }
     }
+
+    fn execute(&self, request: hyper::Request<hyper::Body>) -> DockerResponse {
+        let mut core = Core::new().unwrap();
+
+        let client = self.client.clone();
+
+        let future = client.request(request)
+            .and_then(|res|
+                DockerFuture {
+                    status: res.status(),
+                    body: res.into_body().concat2()
+                }
+            )
+            .map_err(hyper::Error::from)
+            .map_err(Box::<hyper::Error>::from);
+
+        core.run(future).unwrap()
+    }
+
+}
+
+impl DockerClient {
+
 
     /// Create a container
     ///
     /// # Arguments
-    /// * `creator` is container to create.
+    /// * `Config` is container to create.
     ///
     /// # Examples
     ///
     /// ```rust
     /// use docker_client::DockerClient;
-    /// use docker_client::container::Creator;
+    /// use docker_client::container::Config;
     ///
     /// fn main() {
-    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
-    ///         Ok(client) => client,
-    ///         Err(e) => panic!("Cannot connect to socket!"),
-    ///     };
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
     ///
-    ///     let creator = Creator::with_image("alpine").name("test").build();
-    ///     match client.create_container(creator) {
+    ///     let config = Config::with_image("alpine").name("test").build();
+    ///     match client.create_container(config) {
     ///         Ok(_) => {},
     ///         Err(_) => {}
     ///     }
     /// }
     /// ```
-    pub fn create_container(&self, creator: Creator) -> Result<CreatedContainer, DockerError> {
-        let response = creator.to_request().send(self.stream.try_clone().unwrap());
+    pub fn create_container(&self, config: Config) -> Result<CreatedContainer, DockerError> {
+
+        let uri: hyper::Uri = Uri::new(self.path.as_str(), config.get_path().as_str()).into();
+
+        let request = Request::post(uri)
+            .header("Content-Type", "application/json")
+            .body(hyper::Body::from(json::to_string(&config).unwrap()))
+            .unwrap();
+
+        let response = self.execute(request);
 
         match response.status {
             201 => Ok(json::from_str(response.body.as_str()).unwrap()),
@@ -142,10 +208,7 @@ impl DockerClient {
     /// use docker_client::DockerClient;
     ///
     /// fn main() {
-    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
-    ///         Ok(client) => client,
-    ///         Err(e) => panic!("Cannot connect to socket!"),
-    ///     };
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
     ///
     ///     let changes = client.get_fs_changes("test").unwrap_or(Vec::new());
     ///
@@ -158,13 +221,15 @@ impl DockerClient {
         where T: Into<String> {
 
         let id = id.into();
+        let path = format!("/containers/{}/changes", id);
 
-        let url = URI::with_path(format!("/containers/{}/changes", id)).build();
+        let url: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
 
-        let response = Request::get()
-            .url(url)
-            .build()
-            .send(self.stream.try_clone().unwrap());
+        let request = Request::get(url)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        let response = self.execute(request);
 
         match response.status {
             200 => {
@@ -189,10 +254,7 @@ impl DockerClient {
     /// use docker_client::{DockerClient, DockerError};
     ///
     /// fn main() {
-    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
-    ///         Ok(client) => client,
-    ///         Err(e) => panic!("Cannot connect to socket!"),
-    ///     };
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
     ///
     ///     match client.start_container("test", "-d") {
     ///         Ok(_) => {},
@@ -207,20 +269,19 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn start_container<T>(&self, id: T, detach_keys: T) -> Result<(), DockerError>
+    pub fn start_container<T>(&self, id: T, _detach_keys: T) -> Result<(), DockerError>
         where T: Into<String> {
 
         let id = id.into();
-        let detach_keys = detach_keys.into();
+        let path = format!("/containers/{}/start", id);
 
-        let url = URI::with_path(format!("/containers/{}/start", id))
-            .parameter("detachKeys", detach_keys.as_str())
-            .build();
+        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
 
-        let response = Request::post()
-            .url(url)
-            .build()
-            .send(self.stream.try_clone().unwrap());
+        let request = Request::post(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        let response = self.execute(request);
 
         match response.status {
             204 => Ok(()),
@@ -243,10 +304,7 @@ impl DockerClient {
     /// use docker_client::{DockerClient, DockerError};
     ///
     /// fn main() {
-    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
-    ///         Ok(client) => client,
-    ///         Err(e) => panic!("Cannot connect to socket!"),
-    ///     };
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
     ///
     ///     match client.stop_container("test", Some(12)) {
     ///         Ok(_) => {},
@@ -261,19 +319,18 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn stop_container<T>(&self, id: T, wait: Option<i32>) -> Result<(), DockerError>
-        where T: Into<String> {
+    pub fn stop_container<T>(&self, id: T, _wait: Option<i32>) -> Result<(), DockerError>
+        where T: Into<String>
+    {
+        let path = format!("/containers/{}/stop", id.into());
 
-        let mut url = URI::with_path(format!("/containers/{}/stop", id.into()));
+        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
 
-        if wait.is_some() {
-            url.parameter("t", wait.unwrap().to_string());
-        }
+        let request = Request::post(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
 
-        let response = Request::post()
-            .url(url.build())
-            .build()
-            .send(self.stream.try_clone().unwrap());
+        let response = self.execute(request);
 
         match response.status {
             204 => Ok(()),
@@ -295,10 +352,7 @@ impl DockerClient {
     /// use docker_client::{DockerClient, DockerError};
     ///
     /// fn main() {
-    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
-    ///         Ok(client) => client,
-    ///         Err(e) => panic!("Cannot connect to socket!"),
-    ///     };
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
     ///
     ///     match client.pause_container("test") {
     ///         Ok(_) => {},
@@ -314,14 +368,17 @@ impl DockerClient {
     /// }
     /// ```
     pub fn pause_container<T>(&self, id: T) -> Result<(), DockerError>
-        where T: Into<String> {
+        where T: Into<String>
+    {
+        let path = format!("/containers/{}/pause", id.into());
 
-        let url = URI::with_path(format!("/containers/{}/pause", id.into())).build();
+        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
 
-        let response = Request::post()
-            .url(url)
-            .build()
-            .send(self.stream.try_clone().unwrap());
+        let request = Request::post(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        let response = self.execute(request);
 
         match response.status {
             204 => Ok(()),
@@ -329,7 +386,6 @@ impl DockerClient {
             500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
             _ => Err(DockerError::UnknownStatus),
         }
-
     }
 
     /// Unpause a container.
@@ -343,10 +399,7 @@ impl DockerClient {
     /// use docker_client::{DockerClient, DockerError};
     ///
     /// fn main() {
-    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
-    ///         Ok(client) => client,
-    ///         Err(e) => panic!("Cannot connect to socket!"),
-    ///     };
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
     ///
     ///     match client.unpause_container("test") {
     ///         Ok(_) => {},
@@ -364,12 +417,15 @@ impl DockerClient {
     pub fn unpause_container<T>(&self, id: T) -> Result<(), DockerError>
         where T: Into<String> {
 
-        let url = URI::with_path(format!("/containers/{}/unpause", id.into())).build();
+        let path = format!("/containers/{}/unpause", id.into());
 
-        let response = Request::post()
-            .url(url)
-            .build()
-            .send(self.stream.try_clone().unwrap());
+        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
+
+        let request = Request::post(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        let response = self.execute(request);
 
         match response.status {
             204 => Ok(()),
@@ -377,7 +433,6 @@ impl DockerClient {
             500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
             _ => Err(DockerError::UnknownStatus),
         }
-
     }
 
     /// Rename a container.
@@ -392,10 +447,7 @@ impl DockerClient {
     /// use docker_client::{DockerClient, DockerError};
     ///
     /// fn main() {
-    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
-    ///         Ok(client) => client,
-    ///         Err(e) => panic!("Cannot connect to socket!"),
-    ///     };
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
     ///
     ///     match client.rename_container("test", "test1") {
     ///         Ok(_) => {},
@@ -414,14 +466,15 @@ impl DockerClient {
     pub fn rename_container<T>(&self, id: T, new_name: T) -> Result<(), DockerError>
         where T: Into<String> {
 
-        let url = URI::with_path(format!("/containers/{}/rename", id.into()))
-            .parameter("name", new_name.into())
-            .build();
+        let path = format!("/containers/{}/rename?name={}", id.into(), new_name.into());
 
-        let response = Request::post()
-            .url(url)
-            .build()
-            .send(self.stream.try_clone().unwrap());
+        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
+
+        let request = Request::post(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        let response = self.execute(request);
 
         match response.status {
             204 => Ok(()),
@@ -445,10 +498,7 @@ impl DockerClient {
     ///
     /// fn main() {
     ///
-    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
-    ///         Ok(client) => client,
-    ///         Err(e) => panic!("Cannot connect to socket!"),
-    ///     };
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
     ///
     ///     let killer = Killer::new()
     ///         .id("test")
@@ -469,7 +519,14 @@ impl DockerClient {
     /// }
     /// ```
     pub fn kill_container(&self, killer: Killer) -> Result<(), DockerError> {
-        let response = killer.to_request().send(self.stream.try_clone().unwrap());
+
+        let uri: hyper::Uri = Uri::new(self.path.as_str(), killer.get_path().as_str()).into();
+
+        let request = Request::post(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        let response = self.execute(request);
 
         match response.status {
             204 => Ok(()),
@@ -493,10 +550,7 @@ impl DockerClient {
     ///
     /// fn main() {
     ///
-    ///     let client = match DockerClient::connect("/var/run/docker.sock") {
-    ///         Ok(client) => client,
-    ///         Err(e) => panic!("Cannot connect to socket!"),
-    ///     };
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
     ///
     ///     let remover = Remover::new()
     ///         .id("test")
@@ -519,13 +573,65 @@ impl DockerClient {
     /// }
     /// ```
     pub fn remove_container(&self, remover: Remover) -> Result<(), DockerError> {
-        let response = remover.to_request().send(self.stream.try_clone().unwrap());
+
+        let uri: hyper::Uri = Uri::new(self.path.as_str(), remover.get_path().as_str()).into();
+
+        let request = Request::post(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        let response = self.execute(request);
 
         match response.status {
             204 => Ok(()),
             400 => Err(DockerError::BadParameters(json::from_str(response.body.as_str()).unwrap())),
             404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
             409 => Err(DockerError::NotRunning(json::from_str(response.body.as_str()).unwrap())),
+            500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+            _ => Err(DockerError::UnknownStatus),
+        }
+    }
+
+    /// Inspect a container.
+    ///
+    /// Return `ContainerInfo` structure about a container.
+    ///
+    /// # Arguments
+    /// * `id` - ID or name of the container.
+    /// * `size` - Return the size of container as fields SizeRw and SizeRootFs.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use docker_client::{DockerClient, DockerError};
+    ///
+    /// fn main() {
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
+    ///
+    ///     match client.inspect_container("test", true) {
+    ///         Ok(s) => { println!("{:?}", s) },
+    ///         Err(e) => {},
+    ///     }
+    ///
+    /// }
+    /// ```
+    pub fn inspect_container<T>(&self, id: T, size: bool) -> Result<ContainerInfo, DockerError>
+        where T: Into<String>
+    {
+        let path = format!("/containers/{}/json?size={}", id.into(), size.to_string());
+
+        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
+
+        let request = Request::get(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        let response = self.execute(request);
+        std::fs::write("text.txt", response.body.clone()).unwrap();
+
+        match response.status {
+            200 => Ok(json::from_str(response.body.as_str()).unwrap()),
+            404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
             500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
             _ => Err(DockerError::UnknownStatus),
         }

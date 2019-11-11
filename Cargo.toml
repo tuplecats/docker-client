@@ -15,3 +15,11 @@ homepage = "https://github.com/tuplecats/docker-client"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.41"
 unix_socket = "0.5.0"
+hyperlocal = "0.6"
+hyper = "0.12"
+futures = "0.3.1"
+tokio = "0.1.22"
+tokio-core = "0.1.17"
+
+[dev-dependencies]
+doc-comment = "0.3.1"

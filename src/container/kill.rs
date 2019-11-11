@@ -22,10 +22,7 @@
 //! use docker_client::Killer;
 //!
 //! fn main() {
-//!     let client = match DockerClient::connect("/var/run/docker.sock") {
-//!         Ok(client) => client,
-//!         Err(e) => panic!("Cannot connect to socket!"),
-//!     };
+//!     let client = DockerClient::connect("/var/run/docker.sock");
 //!
 //!     let killer = Killer::new()
 //!         .id("example-kill")
@@ -39,9 +36,6 @@
 //! }
 //! ```
 
-
-use crate::container::{ToRequest};
-use crate::http::{Request, URI};
 
 /// A Killer builder.
 ///
@@ -75,6 +69,18 @@ impl Killer {
     /// ```
     pub fn new() -> KillerBuilder {
         KillerBuilder::default()
+    }
+
+    /// TODO: documentation
+    pub fn get_path(&self) -> String {
+        let mut path = format!("/containers/{}/kill?", self.id);
+
+        if self.signal.is_some() {
+            path.push_str(format!("signal={}&", self.signal.clone().unwrap()).as_str());
+        }
+
+        path.pop();
+        path
     }
 }
 
@@ -134,23 +140,5 @@ impl KillerBuilder {
             id: self.id.clone(),
             signal: self.signal.clone()
         }
-    }
-}
-
-impl ToRequest for Killer {
-    fn to_request(&self) -> Request {
-
-        let url = format!("/containers/{}/kill", self.id);
-
-        let mut uri = URI::with_path(url);
-
-        if self.signal.is_some() {
-            let signal = self.signal.clone().unwrap();
-            uri.parameter("signal".to_string(), signal);
-        }
-
-        Request::post()
-            .url(uri.build())
-            .build()
     }
 }
