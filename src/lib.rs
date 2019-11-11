@@ -1,5 +1,4 @@
-#![deny(warnings, missing_debug_implementations)]
-#![deny(missing_docs)]
+#![deny(warnings, missing_docs, missing_debug_implementations)]
 //! # docker_client
 //!
 //! `docker_client` is a client that use docker API. Current support API is 1.40.
@@ -30,7 +29,6 @@
 //! }
 //! ```
 
-#![feature(cfg_doctest)]
 #[cfg(doctest)]
 #[macro_use]
 extern crate doc_comment;
