@@ -154,18 +154,24 @@ fn test_full() {
         .name("test_full")
         .build();
 
-    client.create_container(config).unwrap();
+    match client.create_container(config) {
+        Ok(c) => println!("{:?}", c),
+        Err(_) => return,
+    }
 
     let info = client.inspect_container("test_full", false);
 
     match info {
         Ok(info) => { dbg!(info); },
-        Err(e) => panic!("Error: {:?}", e),
+        Err(e) => println!("Error: {:?}", e),
     }
 
     let remover = Remover::new()
         .id("test_full")
         .build();
 
-    client.remove_container(remover).unwrap();
+    match client.remove_container(remover) {
+        Ok(_) => {},
+        Err(e) => println!("Error {:?}", e)
+    }
 }
