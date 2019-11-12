@@ -145,3 +145,27 @@ fn test_health_check() {
         Err(_) => {},
     }
 }
+
+#[test]
+fn test_full() {
+    let client = DockerClient::connect("/var/run/docker.sock");
+
+    let config = Config::with_image("alpine")
+        .name("test_full")
+        .build();
+
+    client.create_container(config).unwrap();
+
+    let info = client.inspect_container("test_full", false);
+
+    match info {
+        Ok(info) => { dbg!(info); },
+        Err(e) => panic!("Error: {:?}", e),
+    }
+
+    let remover = Remover::new()
+        .id("test_full")
+        .build();
+
+    client.remove_container(remover).unwrap();
+}

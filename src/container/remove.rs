@@ -62,7 +62,7 @@ impl Remover {
 
     /// TODO: documentation
     pub fn get_path(&self) -> String {
-        let mut path = format!("/containers/{}/remove?", self.id);
+        let mut path = format!("/containers/{}?", self.id);
 
         if self.v.is_some() {
             path.push_str(format!("v={}&", self.v.unwrap()).as_str());

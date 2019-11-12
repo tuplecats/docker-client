@@ -576,7 +576,7 @@ impl DockerClient {
 
         let uri: hyper::Uri = Uri::new(self.path.as_str(), remover.get_path().as_str()).into();
 
-        let request = Request::post(uri)
+        let request = Request::delete(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
