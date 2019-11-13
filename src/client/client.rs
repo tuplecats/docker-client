@@ -18,7 +18,7 @@ use crate::image::ShortImageInfo;
 /// `DockerClient` struct.
 #[derive(Debug)]
 pub struct DockerClient {
-    path: String,
+    socket: String,
     client: Client<UnixConnector, hyper::Body>,
 }
 
@@ -42,7 +42,7 @@ impl DockerClient {
         where T: Into<String>
     {
         DockerClient {
-            path: path.into(),
+            socket: path.into(),
             client: Client::builder()
                 .keep_alive(false)
                 .build::<_, hyper::Body>(UnixConnector::new()),
@@ -99,7 +99,7 @@ impl DockerClient {
     /// ```
     pub fn create_container(&self, config: Config) -> Result<CreatedContainer, DockerError> {
 
-        let uri: hyper::Uri = Uri::new(self.path.as_str(), config.get_path().as_str()).into();
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), config.get_path().as_str()).into();
 
         let request = Request::post(uri)
             .header("Content-Type", "application/json")
@@ -141,12 +141,11 @@ impl DockerClient {
     /// }
     /// ```
     pub fn get_fs_changes<T>(&self, id: T) -> Result<Vec<FSChanges>, DockerError>
-        where T: Into<String> {
+        where T: Into<String>
+    {
+        let path = format!("/containers/{}/changes", id.into());
 
-        let id = id.into();
-        let path = format!("/containers/{}/changes", id);
-
-        let url: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
+        let url: hyper::Uri = Uri::new(self.socket.as_str(), path.as_str()).into();
 
         let request = Request::get(url)
             .body(hyper::Body::empty())
@@ -197,12 +196,11 @@ impl DockerClient {
     /// }
     /// ```
     pub fn start_container<T>(&self, id: T, _detach_keys: T) -> Result<(), DockerError>
-        where T: Into<String> {
+        where T: Into<String>
+    {
+        let path = format!("/containers/{}/start", id.into());
 
-        let id = id.into();
-        let path = format!("/containers/{}/start", id);
-
-        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), path.as_str()).into();
 
         let request = Request::post(uri)
             .body(hyper::Body::empty())
@@ -254,7 +252,7 @@ impl DockerClient {
     {
         let path = format!("/containers/{}/stop", id.into());
 
-        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), path.as_str()).into();
 
         let request = Request::post(uri)
             .body(hyper::Body::empty())
@@ -304,7 +302,7 @@ impl DockerClient {
     {
         let path = format!("/containers/{}/pause", id.into());
 
-        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), path.as_str()).into();
 
         let request = Request::post(uri)
             .body(hyper::Body::empty())
@@ -353,7 +351,7 @@ impl DockerClient {
 
         let path = format!("/containers/{}/unpause", id.into());
 
-        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), path.as_str()).into();
 
         let request = Request::post(uri)
             .body(hyper::Body::empty())
@@ -404,7 +402,7 @@ impl DockerClient {
 
         let path = format!("/containers/{}/rename?name={}", id.into(), new_name.into());
 
-        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), path.as_str()).into();
 
         let request = Request::post(uri)
             .body(hyper::Body::empty())
@@ -458,7 +456,7 @@ impl DockerClient {
     /// ```
     pub fn kill_container(&self, killer: Killer) -> Result<(), DockerError> {
 
-        let uri: hyper::Uri = Uri::new(self.path.as_str(), killer.get_path().as_str()).into();
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), killer.get_path().as_str()).into();
 
         let request = Request::post(uri)
             .body(hyper::Body::empty())
@@ -515,7 +513,7 @@ impl DockerClient {
     /// ```
     pub fn remove_container(&self, remover: Remover) -> Result<(), DockerError> {
 
-        let uri: hyper::Uri = Uri::new(self.path.as_str(), remover.get_path().as_str()).into();
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), remover.get_path().as_str()).into();
 
         let request = Request::delete(uri)
             .body(hyper::Body::empty())
@@ -563,7 +561,7 @@ impl DockerClient {
     {
         let path = format!("/containers/{}/json?size={}", id.into(), size.to_string());
 
-        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), path.as_str()).into();
 
         let request = Request::get(uri)
             .body(hyper::Body::empty())
@@ -587,7 +585,7 @@ impl DockerClient {
     {
         let path = format!("/containers/{}/logs?stdout=true", id.into());
 
-        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), path.as_str()).into();
 
         let request = Request::get(uri)
             .body(hyper::Body::empty())
@@ -612,7 +610,7 @@ impl DockerClient {
     {
         let path = format!("/containers/{}/wait?condition={}", id.into(), condition.to_string());
 
-        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), path.as_str()).into();
 
         let request = Request::post(uri)
             .body(hyper::Body::empty())
@@ -636,7 +634,7 @@ impl DockerClient {
     {
         let path = format!("/containers/{}/export", id.into());
 
-        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), path.as_str()).into();
 
         let request = Request::get(uri)
             .body(hyper::Body::empty())
@@ -657,7 +655,7 @@ impl DockerClient {
     pub fn get_image_list(&self) -> Result<Vec<ShortImageInfo>, DockerError> {
 
         let path = "/images/json";
-        let uri: hyper::Uri = Uri::new(self.path.as_str(), path).into();
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), path).into();
 
         let request = Request::get(uri)
             .body(hyper::Body::empty())

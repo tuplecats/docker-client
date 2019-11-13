@@ -37,6 +37,59 @@ pub struct ShortImageInfo {
 
 }
 
+impl ShortImageInfo {
+
+    /// TODO doc
+    pub fn id(&self) -> String {
+        self.id.clone()
+    }
+
+    /// TODO doc
+    pub fn parent_id(&self) -> String {
+        self.parent_id.clone()
+    }
+
+    /// TODO doc
+    pub fn repo_tags(&self) -> Vec<String> {
+        self.repo_tags.clone()
+    }
+
+    /// TODO doc
+    pub fn repo_digests(&self) -> Vec<String> {
+        self.repo_digests.clone()
+    }
+
+    /// TODO doc
+    pub fn created(&self) -> i64 {
+        self.created
+    }
+
+    /// TODO doc
+    pub fn size(&self) -> i64 {
+        self.size
+    }
+
+    /// TODO doc
+    pub fn shared_size(&self) -> i64 {
+        self.shared_size
+    }
+
+    /// TODO doc
+    pub fn virtual_size(&self) -> i64 {
+        self.virtual_size
+    }
+
+    /// TODO doc
+    pub fn labels(&self) -> HashMap<String, String> {
+        self.labels.clone()
+    }
+
+    /// TODO doc
+    pub fn containers(&self) -> i64 {
+        self.containers
+    }
+}
+
 fn nullable_priority_hash<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
     where D: Deserializer<'de>
 {
