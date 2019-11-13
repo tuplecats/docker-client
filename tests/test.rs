@@ -1,6 +1,6 @@
 extern crate docker_client;
 
-use docker_client::{DockerClient};
+use docker_client::{DockerClient, DockerError};
 use docker_client::container::{Remover, Killer, Config, HealthCheck};
 
 fn client() -> DockerClient {
@@ -12,14 +12,19 @@ fn test_kill() {
     let client = client();
 
     let killer = Killer::new()
-        .id("123")
-        .signal("SIGABORT")
-        .signal("dsdsd")
+        .id("test")
+        .signal("SIGINT")
         .build();
 
     match client.kill_container(killer) {
-        Ok(()) => {},
-        Err(_) => {},
+        Ok(()) => { println!("Container killed."); },
+        Err(DockerError::BadParameters(m)) => { println!("Request bad parameters: {}.", m.message); },
+        Err(DockerError::NotFound(m)) => { println!("Container not found: {}.", m.message); },
+        Err(DockerError::NotRunning(m)) => { println!("Container not running: {}.", m.message); },
+        Err(DockerError::ServerError(m)) => { println!("Server error: {}.", m.message); },
+        Err(DockerError::UnknownStatus) => { println!("Unknown response status."); },
+        Err(DockerError::ClosedConnection) => { println!("Connection closed."); },
+        _ => {}
     }
 }
 
@@ -173,5 +178,15 @@ fn test_full() {
     match client.remove_container(remover) {
         Ok(_) => {},
         Err(e) => println!("Error {:?}", e)
+    }
+}
+
+#[test]
+fn test_log() {
+    let client = DockerClient::connect("/var/run/docker.sock");
+
+    match client.get_container_log("psql") {
+        Ok(s) => println!("{}", s),
+        Err(e) => println!("Error {:?}", e),
     }
 }

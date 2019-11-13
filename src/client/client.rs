@@ -1,108 +1,24 @@
-//!
-//! Docker client module.
-//!
-//! The module provides [DockerClient](struct.DockerClient.html) type used to manage docker containers.
-//!
-//! # DockerClient
-//! The [DockerClient](struct.DockerClient.html) provides a set of methods to manage docker containers used docker API.
-//!
-//! # API Documentaion
-//!
-//! API documentaion available at [link](https://docs.docker.com/engine/api/v1.40/)
-//!
-
-
 use serde_json as json;
 
-use serde::Deserialize;
 use crate::container::{Config, Killer, Remover, CreatedContainer};
+use crate::container::info::ContainerInfo;
+use crate::container::FSChanges;
+
+use crate::client::DockerError;
+use crate::client::future::DockerFuture;
+use crate::client::response::DockerResponse;
+
 use hyper::{Client, Request};
-use hyper::rt::{Stream, Future};
+use hyper::rt::{Future, Stream};
+
 use hyperlocal::{UnixConnector, Uri};
 use tokio_core::reactor::Core;
-use tokio::prelude::stream::Concat2;
-use tokio::prelude::Async;
-use crate::container::info::ContainerInfo;
 
 /// `DockerClient` struct.
 #[derive(Debug)]
 pub struct DockerClient {
     path: String,
     client: Client<UnixConnector, hyper::Body>,
-}
-
-/// `ErrorMessage` struct.
-#[derive(Deserialize, Debug)]
-pub struct ErrorMessage {
-    /// Error message get from response.
-    pub message: String
-}
-
-/// `DockerError` enum.
-#[derive(Debug)]
-pub enum DockerError {
-    /// Bad parameters (HTTP status is 401)
-    BadParameters(ErrorMessage), // 401
-
-    /// Server error (HTTP status is 500)
-    ServerError(ErrorMessage), // 500
-
-    /// Server error (HTTP status is 404)
-    NotFound(ErrorMessage), // 404
-
-    /// Server error (HTTP status is 409)
-    NotRunning(ErrorMessage), // 409
-
-    /// Server error (HTTP status is 304)
-    AlreadyStarted(ErrorMessage), // 304
-
-    /// Server error (HTTP status is 409)
-    ContainerExists(ErrorMessage), // 409
-
-    /// Unknown staus
-    UnknownStatus
-}
-
-/// `FSChanges` struct.
-#[derive(Deserialize, Debug)]
-pub struct FSChanges {
-    #[serde(rename(deserialize = "Path"))]
-    path: String,
-
-    #[serde(rename(deserialize = "Kind"))]
-    kind: i32,
-}
-
-
-struct DockerFuture {
-    status: hyper::StatusCode,
-    body: Concat2<hyper::Body>,
-}
-
-#[derive(Clone)]
-struct DockerResponse {
-    status: u16,
-    body: String,
-}
-
-impl Future for DockerFuture {
-    type Item = DockerResponse;
-    type Error = hyper::Error;
-
-    fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
-        self.body.poll().map(|s| {
-            match s {
-                Async::NotReady => Ok(Async::<Self::Item>::NotReady),
-                Async::Ready(s) => {
-                    Ok(Async::Ready(DockerResponse{
-                        status: self.status.as_u16(),
-                        body: std::str::from_utf8(&s).unwrap_or("").to_string(),
-                    }))
-                },
-                //_ => Ok(Async::<Self::Item>::NotReady),
-            }
-        }).unwrap()
-    }
 }
 
 impl DockerClient {
@@ -132,7 +48,7 @@ impl DockerClient {
         }
     }
 
-    fn execute(&self, request: hyper::Request<hyper::Body>) -> DockerResponse {
+    fn execute(&self, request: hyper::Request<hyper::Body>) -> Result<DockerResponse, DockerError> {
         let mut core = Core::new().unwrap();
 
         let client = self.client.clone();
@@ -147,10 +63,14 @@ impl DockerClient {
             .map_err(hyper::Error::from)
             .map_err(Box::<hyper::Error>::from);
 
-        core.run(future).unwrap()
+        match core.run(future) {
+            Ok(v) => Ok(v),
+            Err(_) => Err(DockerError::ClosedConnection),
+        }
     }
 
 }
+
 
 impl DockerClient {
 
@@ -185,16 +105,18 @@ impl DockerClient {
             .body(hyper::Body::from(json::to_string(&config).unwrap()))
             .unwrap();
 
-        let response = self.execute(request);
-
-        match response.status {
-            201 => Ok(json::from_str(response.body.as_str()).unwrap()),
-            400 => Err(DockerError::BadParameters(json::from_str(response.body.as_str()).unwrap())),
-            404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
-            409 => Err(DockerError::ContainerExists(json::from_str(response.body.as_str()).unwrap())),
-            500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
-            _ => Err(DockerError::UnknownStatus),
-        }
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    201 => Ok(json::from_str(response.body.as_str()).unwrap()),
+                    400 => Err(DockerError::BadParameters(json::from_str(response.body.as_str()).unwrap())),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
+                    409 => Err(DockerError::ContainerExists(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+            .map_err(|e| e)
     }
 
     /// Returns which files in a container's filesystem have been added, deleted, or modified.
@@ -229,17 +151,21 @@ impl DockerClient {
             .body(hyper::Body::empty())
             .unwrap();
 
-        let response = self.execute(request);
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    200 => {
+                        let obj: Option<Vec<FSChanges>> = json::from_str(response.body.as_str()).unwrap();
+                        Ok(obj.unwrap_or(Vec::new()))
+                    },
+                    404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+            .map_err(|e| e)
 
-        match response.status {
-            200 => {
-                let obj: Option<Vec<FSChanges>> = json::from_str(response.body.as_str()).unwrap();
-                Ok(obj.unwrap_or(Vec::new()))
-            },
-            404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
-            500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
-            _ => Err(DockerError::UnknownStatus),
-        }
+
     }
 
     /// Start a container.
@@ -281,15 +207,18 @@ impl DockerClient {
             .body(hyper::Body::empty())
             .unwrap();
 
-        let response = self.execute(request);
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    204 => Ok(()),
+                    304 => Ok(()),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+            .map_err(|e| e)
 
-        match response.status {
-            204 => Ok(()),
-            304 => Ok(()),
-            404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
-            500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
-            _ => Err(DockerError::UnknownStatus),
-        }
     }
 
     /// Stop a container.
@@ -330,15 +259,17 @@ impl DockerClient {
             .body(hyper::Body::empty())
             .unwrap();
 
-        let response = self.execute(request);
-
-        match response.status {
-            204 => Ok(()),
-            304 => Ok(()),
-            404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
-            500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
-            _ => Err(DockerError::UnknownStatus),
-        }
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    204 => Ok(()),
+                    304 => Ok(()),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+            .map_err(|e| e)
     }
 
     /// Pause a container.
@@ -378,14 +309,16 @@ impl DockerClient {
             .body(hyper::Body::empty())
             .unwrap();
 
-        let response = self.execute(request);
-
-        match response.status {
-            204 => Ok(()),
-            404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
-            500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
-            _ => Err(DockerError::UnknownStatus),
-        }
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    204 => Ok(()),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+            .map_err(|e| e)
     }
 
     /// Unpause a container.
@@ -425,14 +358,16 @@ impl DockerClient {
             .body(hyper::Body::empty())
             .unwrap();
 
-        let response = self.execute(request);
-
-        match response.status {
-            204 => Ok(()),
-            404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
-            500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
-            _ => Err(DockerError::UnknownStatus),
-        }
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    204 => Ok(()),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+            .map_err(|e| e)
     }
 
     /// Rename a container.
@@ -474,15 +409,17 @@ impl DockerClient {
             .body(hyper::Body::empty())
             .unwrap();
 
-        let response = self.execute(request);
-
-        match response.status {
-            204 => Ok(()),
-            404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
-            409 => Err(DockerError::ContainerExists(json::from_str(response.body.as_str()).unwrap())),
-            500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
-            _ => Err(DockerError::UnknownStatus),
-        }
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    204 => Ok(()),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
+                    409 => Err(DockerError::ContainerExists(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+            .map_err(|e| e)
     }
 
     /// Kill a container.
@@ -526,15 +463,18 @@ impl DockerClient {
             .body(hyper::Body::empty())
             .unwrap();
 
-        let response = self.execute(request);
-
-        match response.status {
-            204 => Ok(()),
-            404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
-            409 => Err(DockerError::NotRunning(json::from_str(response.body.as_str()).unwrap())),
-            500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
-            _ => Err(DockerError::UnknownStatus),
-        }
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    204 => Ok(()),
+                    400 => Err(DockerError::BadParameters(json::from_str(response.body.as_str()).unwrap())),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
+                    409 => Err(DockerError::NotRunning(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+            .map_err(|e| e)
     }
 
     /// Remove a container.
@@ -580,16 +520,18 @@ impl DockerClient {
             .body(hyper::Body::empty())
             .unwrap();
 
-        let response = self.execute(request);
-
-        match response.status {
-            204 => Ok(()),
-            400 => Err(DockerError::BadParameters(json::from_str(response.body.as_str()).unwrap())),
-            404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
-            409 => Err(DockerError::NotRunning(json::from_str(response.body.as_str()).unwrap())),
-            500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
-            _ => Err(DockerError::UnknownStatus),
-        }
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    204 => Ok(()),
+                    400 => Err(DockerError::BadParameters(json::from_str(response.body.as_str()).unwrap())),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
+                    409 => Err(DockerError::NotRunning(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+            .map_err(|e| e)
     }
 
     /// Inspect a container.
@@ -626,14 +568,40 @@ impl DockerClient {
             .body(hyper::Body::empty())
             .unwrap();
 
-        let response = self.execute(request);
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    200 => Ok(json::from_str(response.body.as_str()).unwrap()),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+            .map_err(|e| e)
+    }
 
-        match response.status {
-            200 => Ok(json::from_str(response.body.as_str()).unwrap()),
-            404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
-            500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
-            _ => Err(DockerError::UnknownStatus),
-        }
+    /// TODO doc
+    pub fn get_container_log<T>(&self, id: T) -> Result<String, DockerError>
+        where T: Into<String>
+    {
+        let path = format!("/containers/{}/logs?stdout=true", id.into());
+
+        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
+
+        let request = Request::get(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    200 => Ok(response.body),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+            .map_err(|e| e)
     }
 
 }
