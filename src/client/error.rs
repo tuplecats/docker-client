@@ -29,7 +29,7 @@ pub enum DockerError {
 }
 
 /// `ErrorMessage` struct.
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct ErrorMessage {
     /// Error message get from response.
     pub message: String,

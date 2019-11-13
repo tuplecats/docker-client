@@ -1,6 +1,6 @@
 use serde_json as json;
 
-use crate::container::{Config, Killer, Remover, CreatedContainer};
+use crate::container::{Config, Killer, Remover, CreatedContainer, WaitCondition, WaitStatus};
 use crate::container::info::ContainerInfo;
 use crate::container::FSChanges;
 
@@ -13,6 +13,7 @@ use hyper::rt::{Future, Stream};
 
 use hyperlocal::{UnixConnector, Uri};
 use tokio_core::reactor::Core;
+use crate::image::ShortImageInfo;
 
 /// `DockerClient` struct.
 #[derive(Debug)]
@@ -602,6 +603,74 @@ impl DockerClient {
                 }
             })
             .map_err(|e| e)
+    }
+
+
+    /// TODO doc
+    pub fn wait_container<T>(&self, id: T, condition: WaitCondition) -> Result<WaitStatus, DockerError>
+        where T: Into<String>
+    {
+        let path = format!("/containers/{}/wait?condition={}", id.into(), condition.to_string());
+
+        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
+
+        let request = Request::post(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    200 => Ok(json::from_str(response.body.as_str()).unwrap()),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+    }
+
+
+    /// TODO doc
+    pub fn export_container<T>(&self, id: T) -> Result<(), DockerError>
+        where T: Into<String>
+    {
+        let path = format!("/containers/{}/export", id.into());
+
+        let uri: hyper::Uri = Uri::new(self.path.as_str(), path.as_str()).into();
+
+        let request = Request::get(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    200 => Ok(()),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+    }
+
+    /// TODO doc
+    pub fn get_image_list(&self) -> Result<Vec<ShortImageInfo>, DockerError> {
+
+        let path = "/images/json";
+        let uri: hyper::Uri = Uri::new(self.path.as_str(), path).into();
+
+        let request = Request::get(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    200 => Ok(json::from_str(response.body.as_str()).unwrap()),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
     }
 
 }

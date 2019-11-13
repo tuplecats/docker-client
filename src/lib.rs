@@ -47,6 +47,7 @@ extern crate tokio_core;
 
 pub mod container;
 pub mod client;
+pub mod image;
 
 pub use client::DockerError;
 pub use client::DockerClient;

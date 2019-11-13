@@ -1,7 +1,7 @@
 extern crate docker_client;
 
 use docker_client::{DockerClient, DockerError};
-use docker_client::container::{Remover, Killer, Config, HealthCheck};
+use docker_client::container::{Remover, Killer, Config, HealthCheck, WaitCondition};
 
 fn client() -> DockerClient {
     DockerClient::connect("/var/run/docker.sock")
@@ -187,6 +187,36 @@ fn test_log() {
 
     match client.get_container_log("psql") {
         Ok(s) => println!("{}", s),
+        Err(e) => println!("Error {:?}", e),
+    }
+}
+
+#[test]
+fn test_wait_container() {
+    let client = DockerClient::connect("/var/run/docker.sock");
+
+    match client.wait_container("test", WaitCondition::default()) {
+        Ok(s) => println!("{:?}", s),
+        Err(e) => println!("Error {:?}", e),
+    }
+}
+
+#[test]
+fn test_export_container() {
+    let client = DockerClient::connect("/var/run/docker.sock");
+
+    match client.export_container("test") {
+        Ok(_) => {},
+        Err(e) => println!("Error {:?}", e),
+    }
+}
+
+#[test]
+fn test_image_list() {
+    let client = DockerClient::connect("/var/run/docker.sock");
+
+    match client.get_image_list() {
+        Ok(info) => { dbg!(info); },
         Err(e) => println!("Error {:?}", e),
     }
 }
