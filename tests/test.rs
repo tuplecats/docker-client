@@ -2,6 +2,7 @@ extern crate docker_client;
 
 use docker_client::{DockerClient, DockerError};
 use docker_client::container::{Remover, Killer, Config, HealthCheck, WaitCondition};
+use docker_client::volume::VolumeCreator;
 
 fn client() -> DockerClient {
     DockerClient::connect("/var/run/docker.sock")
@@ -217,6 +218,22 @@ fn test_image_list() {
 
     match client.get_image_list() {
         Ok(info) => { dbg!(info); },
+        Err(e) => println!("Error {:?}", e),
+    }
+}
+
+#[test]
+fn create_volume() {
+    let client = DockerClient::connect("/var/run/docker.sock");
+
+    let volume = VolumeCreator::builder()
+        .name("volume-test")
+        .label("label1", "label-value")
+        .label("label2", "label-3")
+        .build();
+
+    match client.create_volume(volume) {
+        Ok(_) => {},
         Err(e) => println!("Error {:?}", e),
     }
 }

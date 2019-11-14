@@ -14,6 +14,7 @@ use hyper::rt::{Future, Stream};
 use hyperlocal::{UnixConnector, Uri};
 use tokio_core::reactor::Core;
 use crate::image::ShortImageInfo;
+use crate::volume::VolumeCreator;
 
 /// `DockerClient` struct.
 #[derive(Debug)]
@@ -665,6 +666,29 @@ impl DockerClient {
             .and_then(|response| {
                 match response.status {
                     200 => Ok(json::from_str(response.body.as_str()).unwrap()),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+    }
+
+    /// Start volume methods
+    /// TODO doc
+    pub fn create_volume(&self, volume: VolumeCreator) -> Result<(), DockerError> {
+
+        let path = "/volumes/create";
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), path).into();
+
+        let request = Request::post(uri)
+            .header("Content-Type", "application/json")
+            .body(hyper::Body::from(json::to_string(&volume).unwrap()))
+            .unwrap();
+
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    201 => Ok(()),
+                    400 => Err(DockerError::BadParameters(json::from_str(response.body.as_str()).unwrap())),
                     500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
                     _ => Err(DockerError::UnknownStatus),
                 }
