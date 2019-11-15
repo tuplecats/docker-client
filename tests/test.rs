@@ -237,3 +237,33 @@ fn create_volume() {
         Err(e) => println!("Error {:?}", e),
     }
 }
+
+#[test]
+fn inspect_volume() {
+    let client = DockerClient::connect("/var/run/docker.sock");
+
+    match client.inspect_volume("volume-test") {
+        Ok(info) => { dbg!(info); },
+        Err(e) => println!("Error {:?}", e),
+    }
+}
+
+#[test]
+fn delete_unused_volumes() {
+    let client = DockerClient::connect("/var/run/docker.sock");
+
+    match client.delete_unused_volumes() {
+        Ok(deleted) => { dbg!(deleted); },
+        Err(e) => println!("Error {:?}", e),
+    }
+}
+
+#[test]
+fn get_volumes_list() {
+    let client = DockerClient::connect("/var/run/docker.sock");
+
+    match client.get_volumes_list() {
+        Ok(list) => { dbg!(list); },
+        Err(e) => println!("Error {:?}", e),
+    }
+}

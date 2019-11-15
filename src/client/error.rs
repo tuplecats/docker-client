@@ -21,6 +21,9 @@ pub enum DockerError {
     /// Server error (HTTP status is 409)
     ContainerExists(ErrorMessage), // 409
 
+    /// Busy by container (HTTP status is 409)
+    Busy(ErrorMessage), // 409
+
     /// Unknown status
     UnknownStatus,
 

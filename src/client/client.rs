@@ -14,7 +14,7 @@ use hyper::rt::{Future, Stream};
 use hyperlocal::{UnixConnector, Uri};
 use tokio_core::reactor::Core;
 use crate::image::ShortImageInfo;
-use crate::volume::VolumeCreator;
+use crate::volume::{VolumeCreator, VolumeInfo, DeletedInfo, VolumesList};
 
 /// `DockerClient` struct.
 #[derive(Debug)]
@@ -694,5 +694,97 @@ impl DockerClient {
                 }
             })
     }
+
+    /// TODO doc
+    pub fn inspect_volume<T>(&self, name: T) -> Result<VolumeInfo, DockerError>
+        where T: Into<String>
+    {
+
+        let path = format!("/volumes/{}", name.into());
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), path.as_str()).into();
+
+        let request = Request::get(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    200 => Ok(json::from_str(response.body.as_str()).unwrap()),
+                    400 => Err(DockerError::BadParameters(json::from_str(response.body.as_str()).unwrap())),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+    }
+
+    /// TODO doc
+    pub fn remove_volume<T>(&self, name: T, force: bool) -> Result<(), DockerError>
+        where T: Into<String>
+    {
+
+        let path = format!("/volumes/{}?force={}", name.into(), force.to_string());
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), path.as_str()).into();
+
+        let request = Request::delete(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    204 => Ok(()),
+                    400 => Err(DockerError::BadParameters(json::from_str(response.body.as_str()).unwrap())),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body.as_str()).unwrap())),
+                    409 => Err(DockerError::Busy(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+    }
+
+    /// TODO doc
+    pub fn delete_unused_volumes(&self) -> Result<DeletedInfo, DockerError> {
+
+        let path = "/volumes/prune";
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), path).into();
+
+        let request = Request::post(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    200 => Ok(json::from_str(response.body.as_str()).unwrap()),
+                    400 => Err(DockerError::BadParameters(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+    }
+
+    /// TODO doc
+    pub fn get_volumes_list(&self) -> Result<VolumesList, DockerError> {
+
+        let path = "/volumes";
+        let uri: hyper::Uri = Uri::new(self.socket.as_str(), path).into();
+
+        let request = Request::get(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    200 => Ok(json::from_str(response.body.as_str()).unwrap()),
+                    400 => Err(DockerError::BadParameters(json::from_str(response.body.as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body.as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+    }
+
 
 }
