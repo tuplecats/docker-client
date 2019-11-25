@@ -1,6 +1,6 @@
 [package]
 name = "docker_client"
-version = "0.1.0-alpha3"
+version = "0.1.0-alpha4"
 authors = ["Nikolay Muravev <darkpaladin2000@gmail.com>"]
 edition = "2018"
 repository = "https://github.com/tuplecats/docker-client"
