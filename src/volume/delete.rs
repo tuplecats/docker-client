@@ -1,7 +1,7 @@
 
 use serde::Deserialize;
 
-///TODO doc
+/// Deleted info structure
 #[derive(Debug, Deserialize)]
 pub struct DeletedInfo {
 

@@ -12,12 +12,12 @@ pub struct FSChanges {
 
 impl FSChanges {
 
-    /// TODO doc
+    /// Return path
     pub fn path(&self) -> String {
         self.path.clone()
     }
 
-    /// TODO doc
+    /// Return kind
     pub fn kind(&self) -> i32 {
         self.kind
     }

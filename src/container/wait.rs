@@ -1,9 +1,9 @@
-//! TODO doc
+//! Wait module
 
 use crate::client::ErrorMessage;
 use serde::Deserialize;
 
-/// TODO doc
+/// Wait condition enum
 #[derive(Debug)]
 pub enum WaitCondition {
     /// Not running
@@ -33,7 +33,7 @@ impl Default for WaitCondition {
 }
 
 
-/// TODO doc
+/// Wait status structure
 #[derive(Deserialize, Debug)]
 pub struct WaitStatus {
     #[serde(rename = "StatusCode")]
@@ -45,12 +45,12 @@ pub struct WaitStatus {
 
 impl WaitStatus {
 
-    /// TODO doc
+    /// Return status code
     pub fn status_code(&self) -> i32 {
         self.status_code
     }
 
-    /// TODO doc
+    /// Return error `ErrorMessage`
     pub fn error(&self) -> Option<ErrorMessage> {
         self.error.clone()
     }

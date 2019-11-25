@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Deserializer};
 
-/// TODO doc
+/// Usage data structure
 #[derive(Debug, Deserialize)]
 pub struct UsageData {
     #[serde(rename = "Size")]
@@ -11,7 +11,7 @@ pub struct UsageData {
     ref_count: i64,
 }
 
-/// TODO doc
+/// Volume info structure
 #[derive(Debug, Deserialize)]
 pub struct VolumeInfo {
     #[serde(rename = "Name")]

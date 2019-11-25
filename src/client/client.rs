@@ -580,7 +580,30 @@ impl DockerClient {
             .map_err(|e| e)
     }
 
-    /// TODO doc
+    /// Get container logs
+    ///
+    /// Get stdout and stderr logs from a container.
+    ///
+    /// # Note
+    /// This endpoint works only for containers with the json-file or journald logging driver.
+    ///
+    /// # Arguments
+    /// `id` - ID or name of the container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::{DockerClient, DockerError};
+    /// fn main() {
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
+    ///
+    ///     match client.get_container_log("test-container") {
+    ///         Ok(log) => { println!("Log: {}", log); }
+    ///         Err(e) => { println!("Error: {:?}", e); }
+    ///     }
+    ///
+    /// }
+    /// ```
     pub fn get_container_log<T>(&self, id: T) -> Result<String, DockerError>
         where T: Into<String>
     {
@@ -605,7 +628,29 @@ impl DockerClient {
     }
 
 
-    /// TODO doc
+    /// Wait for a container
+    ///
+    /// Block until a container stops, then returns the exit code.
+    ///
+    /// # Arguments
+    /// `id` - ID or name of the container.
+    /// `condition` - Wait until a container state reaches the given condition, either 'not-running' (default), 'next-exit', or 'removed'.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::{DockerClient, DockerError};
+    /// # use docker_client::container::WaitCondition;
+    /// fn main() {
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
+    ///
+    ///     match client.wait_container("test-container", WaitCondition::NotRunning) {
+    ///         Ok(status) => { println!("Status: {:?}", status); }
+    ///         Err(e) => { println!("Error: {:?}", e); }
+    ///     }
+    ///
+    /// }
+    /// ```
     pub fn wait_container<T>(&self, id: T, condition: WaitCondition) -> Result<WaitStatus, DockerError>
         where T: Into<String>
     {
@@ -629,7 +674,27 @@ impl DockerClient {
     }
 
 
-    /// TODO doc
+    /// Export a container
+    ///
+    /// Return empty object or DockerError
+    ///
+    /// # Arguments
+    /// `id` - ID or name of the container.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::{DockerClient, DockerError};
+    /// fn main() {
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
+    ///
+    ///     match client.export_container("test-container") {
+    ///         Ok(_) => {},
+    ///         Err(e) => { println!("Error: {:?}", e); },
+    ///     }
+    ///
+    /// }
+    /// ```
     pub fn export_container<T>(&self, id: T) -> Result<(), DockerError>
         where T: Into<String>
     {
@@ -652,7 +717,24 @@ impl DockerClient {
             })
     }
 
-    /// TODO doc
+    /// Get images list
+    ///
+    /// Return vector of ShortImageInfo or DockerError
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::{DockerClient, DockerError};
+    /// fn main() {
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
+    ///
+    ///     match client.get_image_list() {
+    ///         Ok(list) => { println!("{:?}", list); },
+    ///         Err(e) => { println!("Error: {:?}", e); },
+    ///     }
+    ///
+    /// }
+    /// ```
     pub fn get_image_list(&self) -> Result<Vec<ShortImageInfo>, DockerError> {
 
         let path = "/images/json";
@@ -672,8 +754,32 @@ impl DockerClient {
             })
     }
 
-    /// Start volume methods
-    /// TODO doc
+    /// Create a volume
+    ///
+    /// Return empty object or DockerError
+    ///
+    /// # Arguments
+    /// * `volume` - VolumeCreator struct.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::{DockerClient, DockerError};
+    /// # use docker_client::volume::VolumeCreator;
+    /// fn main() {
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
+    ///
+    ///     let creator = VolumeCreator::builder()
+    ///         .name("test")
+    ///         .build();
+    ///
+    ///     match client.create_volume(creator) {
+    ///         Ok(_) => {},
+    ///         Err(e) => { println!("Error: {:?}", e); },
+    ///     }
+    ///
+    /// }
+    /// ```
     pub fn create_volume(&self, volume: VolumeCreator) -> Result<(), DockerError> {
 
         let path = "/volumes/create";
@@ -695,7 +801,27 @@ impl DockerClient {
             })
     }
 
-    /// TODO doc
+    /// Inspect volume
+    ///
+    /// Return VolumeInfo or DockerError
+    ///
+    /// # Arguments
+    /// * `name` - ID or name of the volume.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::{DockerClient, DockerError};
+    /// fn main() {
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
+    ///
+    ///     match client.inspect_volume("test") {
+    ///         Ok(info) => { println!("{:?}", info); },
+    ///         Err(e) => { println!("Error: {:?}", e); },
+    ///     }
+    ///
+    /// }
+    /// ```
     pub fn inspect_volume<T>(&self, name: T) -> Result<VolumeInfo, DockerError>
         where T: Into<String>
     {
@@ -719,7 +845,28 @@ impl DockerClient {
             })
     }
 
-    /// TODO doc
+    /// Remove volume
+    ///
+    /// Instruct the driver to remove the volume.
+    ///
+    /// # Arguments
+    /// * `name` - ID or name of the volume.
+    /// * `force` - Force the removal of the volume.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::{DockerClient, DockerError};
+    /// fn main() {
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
+    ///
+    ///     match client.remove_volume("test", false) {
+    ///         Ok(_) => {},
+    ///         Err(e) => { println!("Error: {:?}", e); },
+    ///     }
+    ///
+    /// }
+    /// ```
     pub fn remove_volume<T>(&self, name: T, force: bool) -> Result<(), DockerError>
         where T: Into<String>
     {
@@ -744,7 +891,24 @@ impl DockerClient {
             })
     }
 
-    /// TODO doc
+    /// Delete unused volumes
+    ///
+    /// Return empty or DockerError
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::{DockerClient, DockerError};
+    /// fn main() {
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
+    ///
+    ///     match client.delete_unused_volumes() {
+    ///         Ok(_) => {},
+    ///         Err(e) => { println!("Error: {:?}", e); },
+    ///     }
+    ///
+    /// }
+    /// ```
     pub fn delete_unused_volumes(&self) -> Result<DeletedInfo, DockerError> {
 
         let path = "/volumes/prune";
@@ -765,7 +929,24 @@ impl DockerClient {
             })
     }
 
-    /// TODO doc
+    /// Get volumes list
+    ///
+    /// Return VolumesList or DockerError
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use docker_client::{DockerClient, DockerError};
+    /// fn main() {
+    ///     let client = DockerClient::connect("/var/run/docker.sock");
+    ///
+    ///     match client.get_volumes_list() {
+    ///         Ok(list) => { println!("{:?}", list); },
+    ///         Err(e) => { println!("Error: {:?}", e); },
+    ///     }
+    ///
+    /// }
+    /// ```
     pub fn get_volumes_list(&self) -> Result<VolumesList, DockerError> {
 
         let path = "/volumes";

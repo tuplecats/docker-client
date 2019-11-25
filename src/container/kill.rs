@@ -71,7 +71,7 @@ impl Killer {
         KillerBuilder::default()
     }
 
-    /// TODO: documentation
+    /// Return path for request
     pub fn get_path(&self) -> String {
         let mut path = format!("/containers/{}/kill?", self.id);
 

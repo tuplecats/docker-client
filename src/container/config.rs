@@ -683,7 +683,7 @@ impl Config {
         builder
     }
 
-    /// TODO: documentation
+    /// Return path for request
     pub fn get_path(&self) -> String {
         let mut path = format!("/containers/create?");
 

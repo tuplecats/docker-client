@@ -1,4 +1,4 @@
-//! TODO doc
+//! Volume module
 
 mod create;
 mod info;

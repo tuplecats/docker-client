@@ -1,4 +1,4 @@
-//! TODO doc
+//! Image module
 
 mod short_info;
 

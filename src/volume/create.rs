@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use serde::Serialize;
 
-/// TODO doc
+/// Volume creator builder
 #[derive(Debug, Default)]
 pub struct VolumeCreatorBuilder {
     name: String,
@@ -10,7 +10,7 @@ pub struct VolumeCreatorBuilder {
     labels: HashMap<String, String>,
 }
 
-/// TODO doc
+/// Volume creator structure
 #[derive(Serialize, Debug)]
 pub struct VolumeCreator {
     #[serde(skip_serializing_if = "String::is_empty", rename = "Name")]
@@ -28,7 +28,7 @@ pub struct VolumeCreator {
 
 impl VolumeCreator {
 
-    /// TODO doc
+    /// Get builder
     pub fn builder() -> VolumeCreatorBuilder {
         VolumeCreatorBuilder::default()
     }
@@ -37,12 +37,12 @@ impl VolumeCreator {
 
 impl VolumeCreatorBuilder {
 
-    /// TODO doc
+    /// Create new default builder
     pub fn new() -> Self {
         VolumeCreatorBuilder::default()
     }
 
-    /// TODO doc
+    /// Set name
     pub fn name<T>(&mut self, name: T) -> &mut Self
         where T: Into<String>
     {
@@ -51,7 +51,7 @@ impl VolumeCreatorBuilder {
         self
     }
 
-    /// TODO doc
+    /// Set driver
     pub fn driver<T>(&mut self, driver: T) -> &mut Self
         where T: Into<String>
     {
@@ -60,7 +60,7 @@ impl VolumeCreatorBuilder {
         self
     }
 
-    /// TODO doc
+    /// Add driver option
     pub fn driver_opt<T, U>(&mut self, key: T, value: U) -> &mut Self
         where
             T: Into<String>,
@@ -71,7 +71,7 @@ impl VolumeCreatorBuilder {
         self
     }
 
-    /// TODO doc
+    /// Add label
     pub fn label<T, U>(&mut self, key: T, value: U) -> &mut Self
         where
             T: Into<String>,
@@ -82,7 +82,7 @@ impl VolumeCreatorBuilder {
         self
     }
 
-    /// TODO doc
+    /// Build VolumeCreator
     pub fn build(&self) -> VolumeCreator {
         VolumeCreator {
             name: self.name.clone(),

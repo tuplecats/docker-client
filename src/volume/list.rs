@@ -1,7 +1,7 @@
 use crate::volume::VolumeInfo;
 use serde::{Deserialize, Deserializer};
 
-///TODO doc
+/// Volumes list structure
 #[derive(Debug, Deserialize)]
 pub struct VolumesList {
 

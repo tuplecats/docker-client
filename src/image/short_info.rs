@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Deserializer};
 
-/// TODO doc
+/// Short image info
 #[derive(Deserialize, Debug)]
 pub struct ShortImageInfo {
 
@@ -39,52 +39,52 @@ pub struct ShortImageInfo {
 
 impl ShortImageInfo {
 
-    /// TODO doc
+    /// Return id of image
     pub fn id(&self) -> String {
         self.id.clone()
     }
 
-    /// TODO doc
+    /// Return parent id
     pub fn parent_id(&self) -> String {
         self.parent_id.clone()
     }
 
-    /// TODO doc
+    /// Return repo tags
     pub fn repo_tags(&self) -> Vec<String> {
         self.repo_tags.clone()
     }
 
-    /// TODO doc
+    /// Return repo digests
     pub fn repo_digests(&self) -> Vec<String> {
         self.repo_digests.clone()
     }
 
-    /// TODO doc
+    /// Return created
     pub fn created(&self) -> i64 {
         self.created
     }
 
-    /// TODO doc
+    /// Return size of image
     pub fn size(&self) -> i64 {
         self.size
     }
 
-    /// TODO doc
+    /// Return shared size
     pub fn shared_size(&self) -> i64 {
         self.shared_size
     }
 
-    /// TODO doc
+    /// Return virtual size
     pub fn virtual_size(&self) -> i64 {
         self.virtual_size
     }
 
-    /// TODO doc
+    /// Return labels
     pub fn labels(&self) -> HashMap<String, String> {
         self.labels.clone()
     }
 
-    /// TODO doc
+    /// Return count of containers with this image
     pub fn containers(&self) -> i64 {
         self.containers
     }
