@@ -21,6 +21,10 @@ addons:
     packages:
       - docker
 
+branches:
+  only:
+    - master
+
 notifications:
   webhooks:
     - https://travis-tg.herokuapp.com/u/312348960/force
