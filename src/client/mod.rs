@@ -14,7 +14,6 @@
 
 mod client;
 mod error;
-mod future;
 mod response;
 
 pub use client::DockerClient;

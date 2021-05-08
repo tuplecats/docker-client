@@ -1,6 +1,6 @@
 [package]
 name = "docker_client"
-version = "0.1.0-alpha4"
+version = "0.1.0-alpha5"
 authors = ["Nikolay Muravev <darkpaladin2000@gmail.com>"]
 edition = "2018"
 repository = "https://github.com/tuplecats/docker-client"
@@ -12,14 +12,14 @@ homepage = "https://github.com/tuplecats/docker-client"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0.41"
+serde = { version = "1.0.125", features = ["derive"] }
+serde_json = "1.0.64"
 unix_socket = "0.5.0"
-hyperlocal = "0.6"
-hyper = "0.12"
-futures = "0.3.1"
-tokio = "0.1.22"
-tokio-core = "0.1.17"
+hyperlocal = "0.8.0"
+hyper = { version = "0.14", features = ["full"] }
+futures = "0.3"
+tokio = { version = "1", features = ["full"] }
+tokio-core = "0.1.18"
 
 [dev-dependencies]
-doc-comment = "0.3.1"
+doc-comment = "0.3.3"

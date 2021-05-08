@@ -5,16 +5,14 @@ use crate::container::info::ContainerInfo;
 use crate::container::FSChanges;
 
 use crate::client::DockerError;
-use crate::client::future::DockerFuture;
 use crate::client::response::DockerResponse;
 
 use hyper::{Client, Request};
-use hyper::rt::{Future, Stream};
 
 use hyperlocal::{UnixConnector, Uri};
-use tokio_core::reactor::Core;
 use crate::image::ShortImageInfo;
 use crate::volume::{VolumeCreator, VolumeInfo, DeletedInfo, VolumesList};
+use tokio::runtime::Runtime;
 
 /// `DockerClient` struct.
 #[derive(Debug)]
@@ -45,30 +43,33 @@ impl DockerClient {
         DockerClient {
             socket: path.into(),
             client: Client::builder()
-                .keep_alive(false)
-                .build::<_, hyper::Body>(UnixConnector::new()),
+                .pool_max_idle_per_host(0)
+                .build::<_, hyper::Body>(UnixConnector::default()),
         }
     }
 
     fn execute(&self, request: hyper::Request<hyper::Body>) -> Result<DockerResponse, DockerError> {
-        let mut core = Core::new().unwrap();
-
         let client = self.client.clone();
 
-        let future = client.request(request)
-            .and_then(|res|
-                DockerFuture {
-                    status: res.status(),
-                    body: res.into_body().concat2()
-                }
-            )
-            .map_err(hyper::Error::from)
-            .map_err(Box::<hyper::Error>::from);
+        let resp_fut = async {
+            let resp = client.request(request).await;
+            match resp {
+                Ok(v) => Ok(
+                    DockerResponse {
+                        status: v.status().as_u16(),
+                        body: String::from_utf8(
+                            hyper::body::to_bytes(v.into_body()).await.unwrap().to_vec()
+                        ).unwrap()
+                    }
+                ),
+                Err(_) => Err(DockerError::ClosedConnection)
+            }
+        };
 
-        match core.run(future) {
-            Ok(v) => Ok(v),
-            Err(_) => Err(DockerError::ClosedConnection),
-        }
+        let rt = Runtime::new().unwrap();
+
+        rt.block_on(resp_fut)
+
     }
 
 }

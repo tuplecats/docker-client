@@ -14,7 +14,7 @@ pub struct ShortImageInfo {
     #[serde(rename = "RepoTags")]
     repo_tags: Vec<String>,
 
-    #[serde(rename = "RepoDigests")]
+    #[serde(rename = "RepoDigests", deserialize_with = "nullable_vector")]
     repo_digests: Vec<String>,
 
     #[serde(rename = "Created")]
@@ -91,6 +91,13 @@ impl ShortImageInfo {
 }
 
 fn nullable_priority_hash<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
+    where D: Deserializer<'de>
+{
+    let opt = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or(Default::default()))
+}
+
+fn nullable_vector<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
     where D: Deserializer<'de>
 {
     let opt = Option::deserialize(deserializer)?;

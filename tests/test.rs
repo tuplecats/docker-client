@@ -130,7 +130,7 @@ fn test_create() {
 fn test_inspect_container() {
     let client = client();
 
-    match client.inspect_container("test", true) {
+    match client.inspect_container("trait", true) {
         Ok(c) => {dbg!(c);},
         Err(e) => {dbg!(e);}
     }
