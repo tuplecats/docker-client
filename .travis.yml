@@ -12,7 +12,7 @@ matrix:
     - rust: beta
 
 script:
-  - cargo test
+  - cargo test --features="unix-socket" --
 
 addons:
   apt:
