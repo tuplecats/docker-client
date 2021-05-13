@@ -14,8 +14,7 @@ homepage = "https://github.com/tuplecats/docker-client"
 [dependencies]
 serde = { version = "1.0.125", features = ["derive"] }
 serde_json = "1.0.64"
-unix_socket = "0.5.0"
-hyperlocal = "0.8.0"
+hyperlocal = { version = "0.8.0", optional = true}
 hyper = { version = "0.14", features = ["full"] }
 futures = "0.3"
 tokio = { version = "1", features = ["full"] }
@@ -23,3 +22,6 @@ tokio-core = "0.1.18"
 
 [dev-dependencies]
 doc-comment = "0.3.3"
+
+[features]
+unix-socket = ["hyperlocal"]

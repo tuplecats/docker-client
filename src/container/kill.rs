@@ -22,7 +22,7 @@
 //! use docker_client::Killer;
 //!
 //! fn main() {
-//!     let client = DockerClient::connect("/var/run/docker.sock");
+//!     let client = DockerClient::new();
 //!
 //!     let killer = Killer::new()
 //!         .id("example-kill")

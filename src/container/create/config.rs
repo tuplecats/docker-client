@@ -1,76 +1,12 @@
-//!
-//! Config container types.
-//!
-//! The module provides [ConfigBuilder](struct.ConfigBuilder.html) and [Config](struct.Config.html) types
-//! used to create a support structure to create a container.
-//!
-//! # ConfigBuilder
-//! The [ConfigBuilder](struct.ConfigBuilder.html) provides a set of methods to create a structure [Config](struct.Config.html).
-//!
-//! # Config
-//! The [Config](struct.Config.html) is a helper structure for sending a request to create a container.
-//!
-//! # API Documentaion
-//!
-//! API documentaion available at [link](https://docs.docker.com/engine/api/v1.40/#operation/ContainerCreate)
-//!
-//! # Examples
-//!
-//! Create container example.
-//!```rust
-//! use docker_client::DockerClient;
-//! use docker_client::container::Config;
-//!
-//! fn main() {
-//!     let client = DockerClient::connect("/var/run/docker.sock");
-//!
-//!     let config = Config::with_image("alpine")
-//!         .name("test")
-//!         .mac_address("1A:2B:3C:4D:5E:6F")
-//!         .expose_port("22/tcp")
-//!         .hostname("example-hostname")
-//!         .domain_name("example-domainname")
-//!         .network_disabled(false)
-//!         .cmd("echo hi")
-//!         .build();
-//!
-//!     match client.create_container(config) {
-//!         Ok(_) => {},
-//!         Err(_) => {},
-//!     }
-//! }
-//! ```
-
 use serde::{Deserialize, Serialize, Deserializer};
 use std::collections::HashMap;
-use crate::container::health_check::HealthCheck;
+use crate::additionals::network::NetworkSettings;
+use crate::container::HealthCheck;
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
-struct EmptyObject;
+use crate::additionals::serde_helpers::*;
 
-/// A `Config` builder.
-///
-/// This type can be used to construct an instance `Config` through a builder-like pattern.
-///
-/// # Examples
-///
-/// Construct a `Config` example.
-/// ```rust
-/// use docker_client::container::ConfigBuilder;
-///
-/// fn main() {
-///     let builder = ConfigBuilder::with_image("alpine")
-///         .name("example")
-///         .hostname("localhost")
-///         .expose_port("80/tcp")
-///         .build();
-///
-///     println!("{:?}", builder);
-/// }
-/// ```
 #[derive(Debug, Default)]
 pub struct ConfigBuilder {
-    name: Option<String>,
     hostname: Option<String>,
     domain_name: Option<String>,
     user: Option<String>,
@@ -97,7 +33,7 @@ pub struct ConfigBuilder {
     stop_timeout: Option<i32>,
     shell: Vec<String>,
     //host_config: Option<HostConfig>,
-    //network_config: Option<NetworkConfig>,
+    network_config: Option<NetworkSettings>,
 }
 
 impl ConfigBuilder {
@@ -124,24 +60,6 @@ impl ConfigBuilder {
         let mut builder = ConfigBuilder::new();
         builder.image = Some(image.into());
         builder
-    }
-
-    /// Set name for this container.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use docker_client::container::ConfigBuilder;
-    /// let builder = ConfigBuilder::with_image("alpine")
-    ///     .name("example-name")
-    ///     .build();
-    /// ```
-    pub fn name<T>(&mut self, name: T) -> &mut Self
-        where T: Into<String>
-    {
-        self.name = Some(name.into());
-
-        self
     }
 
     /// Set hostname for this container.
@@ -569,6 +487,12 @@ impl ConfigBuilder {
         self
     }
 
+    pub fn network_config(&mut self, cfg: Option<NetworkSettings>) -> &mut Self {
+        self.network_config = cfg;
+
+        self
+    }
+
     /// Build `Config` from `ConfigBuilder`
     ///
     /// # Examples
@@ -579,7 +503,6 @@ impl ConfigBuilder {
     /// ```
     pub fn build(&self) -> Config {
         Config {
-            name: self.name.clone(),
             hostname: self.hostname.clone(),
             domain_name: self.domain_name.clone(),
             user: self.user.clone(),
@@ -597,7 +520,8 @@ impl ConfigBuilder {
             volumes: self.volumes.clone(),
             health_check: self.health_check.clone(),
             work_dir: self.work_dir.clone(),
-            network_disabled: self.network_disabled.clone()
+            network_disabled: self.network_disabled.clone(),
+            network_config: self.network_config.clone()
         }
     }
 }
@@ -605,9 +529,6 @@ impl ConfigBuilder {
 /// A struct of metadata to create a container.
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct Config {
-
-    #[serde(skip_serializing, skip_deserializing)]
-    name: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none", rename = "Hostname")]
     hostname: Option<String>,
@@ -663,6 +584,8 @@ pub struct Config {
     #[serde(skip_serializing_if = "Option::is_none", rename = "NetworkDisabled")]
     network_disabled: Option<bool>,
 
+    #[serde(skip_serializing_if = "Option::is_none", rename = "NetworkConfig")]
+    network_config: Option<NetworkSettings>,
 }
 
 impl Config {
@@ -683,53 +606,4 @@ impl Config {
         builder
     }
 
-    /// Return path for request
-    pub fn get_path(&self) -> String {
-        let mut path = format!("/containers/create?");
-
-        if self.name.is_some() {
-            path.push_str(format!("name={}&", self.name.clone().unwrap()).as_str());
-        }
-
-        path.pop();
-        path
-    }
-
-}
-
-/// Created container struct.
-#[derive(Deserialize, Debug)]
-pub struct CreatedContainer {
-
-    #[serde(rename(deserialize = "Id"))]
-    id: String,
-
-    #[serde(rename(deserialize = "Warnings"))]
-    warnings: Vec<String>,
-}
-
-impl CreatedContainer {
-    /// Return id.
-    pub fn id(&self) -> String {
-        self.id.clone()
-    }
-
-    /// Return array of warnings.
-    pub fn warnings(&self) -> Vec<String> {
-        self.warnings.clone()
-    }
-}
-
-fn nullable_priority_hash<'de, D>(deserializer: D) -> Result<HashMap<String, EmptyObject>, D::Error>
-    where D: Deserializer<'de>
-{
-    let opt = Option::deserialize(deserializer)?;
-    Ok(opt.unwrap_or(Default::default()))
-}
-
-fn nullable_priority_vec<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
-    where D: Deserializer<'de>
-{
-    let opt = Option::deserialize(deserializer)?;
-    Ok(opt.unwrap_or(Vec::new()))
 }

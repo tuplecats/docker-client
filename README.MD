@@ -20,7 +20,7 @@ use docker_client::container::Config;
 
 fn main() {
 
-    let client = DockerClient::connect("/var/run/docker.sock");
+    let client = DockerClient::new();
 
     let config = Config::with_image("alpine")
         .name("test")

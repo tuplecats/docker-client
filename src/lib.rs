@@ -1,4 +1,4 @@
-#![deny(warnings, missing_docs, missing_debug_implementations)]
+//!#![deny(warnings, missing_docs, missing_debug_implementations)]
 //! # docker_client
 //!
 //! `docker_client` is a client that use docker API. Current support API is 1.40.
@@ -7,16 +7,20 @@
 //!
 //! ```
 //! use docker_client::DockerClient;
-//! use docker_client::container::Config;
+//! use docker_client::container::{Config, Create};
 //!
 //! fn main() {
 //!     // Create docker client
-//!     let client = DockerClient::connect("/var/run/docker.sock");
+//!     let client = DockerClient::new();
 //!
-//!     let config = Config::with_image("alpine").name("test").build();
+//!     let request = Create::new().config(
+//!         Config::with_image("alpine").build()
+//!     )
+//!     .name("test")
+//!     .build();
 //!
 //!     // Create container
-//!     match client.create_container(config) {
+//!     match client.create_container(request) {
 //!         Ok(_) => {},
 //!         Err(_) => {}
 //!     };
@@ -28,7 +32,6 @@
 //!     }
 //! }
 //! ```
-
 #[cfg(test)]
 #[macro_use]
 extern crate doc_comment;
@@ -38,9 +41,12 @@ doctest!("../README.MD", another);
 
 extern crate serde;
 extern crate serde_json;
-extern crate unix_socket;
+
 extern crate hyper;
+
+#[cfg(feature = "unix-socket")]
 extern crate hyperlocal;
+
 extern crate futures;
 extern crate tokio;
 extern crate tokio_core;
@@ -49,6 +55,7 @@ pub mod container;
 pub mod client;
 pub mod image;
 pub mod volume;
+pub mod additionals;
 
 pub use client::DockerError;
 pub use client::DockerClient;

@@ -1,11 +1,29 @@
 extern crate docker_client;
 
 use docker_client::{DockerClient, DockerError};
-use docker_client::container::{Remover, Killer, Config, HealthCheck, WaitCondition};
+use docker_client::container::{Remover, Killer, Config, HealthCheck, WaitCondition, Create};
 use docker_client::volume::VolumeCreator;
+use docker_client::container::ContainersList;
+use docker_client::container::inspect::Inspect;
+use docker_client::container::processes_list::ProcessesList;
+use std::path::Path;
 
 fn client() -> DockerClient {
-    DockerClient::connect("/var/run/docker.sock")
+    DockerClient::new()
+}
+
+#[test]
+fn test_list_containers() {
+    let client = client();
+
+    let req = ContainersList::new().all(true).build();
+
+    match client.containers_list(req) {
+        Ok(v) => { println!("{:?}", v); },
+        Err(DockerError::BadParameters(m)) => { println!("Request bad parameters: {}.", m.message); },
+        Err(DockerError::ServerError(m)) => { println!("Server error: {}.", m.message); },
+        _ => { println!("Disconnected"); }
+    }
 }
 
 #[test]
@@ -110,17 +128,14 @@ fn test_fs_changes() {
 fn test_create() {
     let client = client();
 
-    let config = Config::with_image("alpine")
-        .name("trait")
-        .hostname("localhost")
-        .domain_name("www.ddd.com")
-        .network_disabled(false)
-        .entry_point("hello")
-        .expose_port("22/tcp")
-        .build();
+    let request = Create::new()
+        .config(
+            Config::with_image("alpine")
+                .build()
+        )
+        .name("test").build();
 
-
-    match client.create_container(config) {
+    match client.create_container(request) {
         Ok(c) => {dbg!(c);},
         Err(e) => {dbg!(e);},
     }
@@ -130,7 +145,9 @@ fn test_create() {
 fn test_inspect_container() {
     let client = client();
 
-    match client.inspect_container("trait", true) {
+    let request = Inspect::container("vigilant_antonelli".to_string());
+
+    match client.inspect_container(request) {
         Ok(c) => {dbg!(c);},
         Err(e) => {dbg!(e);}
     }
@@ -139,33 +156,45 @@ fn test_inspect_container() {
 #[test]
 fn test_health_check() {
 
-    let client = DockerClient::connect("/var/run/docker.sock");
+    let client = client();
     let health_check = HealthCheck::new().test("echo test").build();
-    let config = Config::with_image("alpine")
-        .name("name")
-        .health_check(Some(health_check))
-        .build();
 
-    match client.create_container(config) {
+    let request = Create::new().name("name").config(
+        Config::with_image("alpine")
+            .health_check(Some(health_check)).build()
+    ).build();
+
+    match client.create_container(request) {
         Ok(container) => { println!("{:?}", container); },
         Err(_) => {},
     }
 }
 
 #[test]
+fn test_top() {
+    let client = client();
+
+    match client.top(ProcessesList::container("vigilant_antonelli".to_string())) {
+        Ok(v) => println!("{:?}", v),
+        Err(_) => return
+    }
+}
+
+#[test]
 fn test_full() {
-    let client = DockerClient::connect("/var/run/docker.sock");
+    let client = client();
 
-    let config = Config::with_image("alpine")
-        .name("test_full")
-        .build();
+    let request = Create::new().name("test_full").config(
+        Config::with_image("alpine").build()
+    ).build();
 
-    match client.create_container(config) {
+    match client.create_container(request) {
         Ok(c) => println!("{:?}", c),
         Err(_) => return,
     }
 
-    let info = client.inspect_container("test_full", false);
+    let request_inspect = Inspect::container("vigilant_antonelli".to_string());
+    let info = client.inspect_container(request_inspect);
 
     match info {
         Ok(info) => { dbg!(info); },
@@ -184,7 +213,7 @@ fn test_full() {
 
 #[test]
 fn test_log() {
-    let client = DockerClient::connect("/var/run/docker.sock");
+    let client = client();
 
     match client.get_container_log("psql") {
         Ok(s) => println!("{}", s),
@@ -194,7 +223,7 @@ fn test_log() {
 
 #[test]
 fn test_wait_container() {
-    let client = DockerClient::connect("/var/run/docker.sock");
+    let client = client();
 
     match client.wait_container("test", WaitCondition::default()) {
         Ok(s) => println!("{:?}", s),
@@ -204,9 +233,13 @@ fn test_wait_container() {
 
 #[test]
 fn test_export_container() {
-    let client = DockerClient::connect("/var/run/docker.sock");
+    let client = client();
 
-    match client.export_container("test") {
+    let mut path = std::env::temp_dir();
+    path.push("export_container");
+    path.set_extension("tar");
+
+    match client.export_container("test", path.as_path()) {
         Ok(_) => {},
         Err(e) => println!("Error {:?}", e),
     }
@@ -214,7 +247,7 @@ fn test_export_container() {
 
 #[test]
 fn test_image_list() {
-    let client = DockerClient::connect("/var/run/docker.sock");
+    let client = client();
 
     match client.get_image_list() {
         Ok(info) => { dbg!(info); },
@@ -224,7 +257,7 @@ fn test_image_list() {
 
 #[test]
 fn create_volume() {
-    let client = DockerClient::connect("/var/run/docker.sock");
+    let client = client();
 
     let volume = VolumeCreator::builder()
         .name("volume-test")
@@ -240,7 +273,7 @@ fn create_volume() {
 
 #[test]
 fn inspect_volume() {
-    let client = DockerClient::connect("/var/run/docker.sock");
+    let client = client();
 
     match client.inspect_volume("volume-test") {
         Ok(info) => { dbg!(info); },
@@ -250,7 +283,7 @@ fn inspect_volume() {
 
 #[test]
 fn delete_unused_volumes() {
-    let client = DockerClient::connect("/var/run/docker.sock");
+    let client = client();
 
     match client.delete_unused_volumes() {
         Ok(deleted) => { dbg!(deleted); },
@@ -260,7 +293,7 @@ fn delete_unused_volumes() {
 
 #[test]
 fn get_volumes_list() {
-    let client = DockerClient::connect("/var/run/docker.sock");
+    let client = client();
 
     match client.get_volumes_list() {
         Ok(list) => { dbg!(list); },

@@ -22,7 +22,7 @@
 //! use docker_client::Remover;
 //!
 //! fn main() {
-//!     let client = DockerClient::connect("/var/run/docker.sock");
+//!     let client = DockerClient::new();
 //!
 //!     let remover = Remover::new()
 //!         .id("example-remove")

@@ -15,19 +15,22 @@
 //! Kill container example.
 //! ```rust
 //! use docker_client::{DockerClient, Config};
+//! use docker_client::container::Create;
 //! use docker_client::container::HealthCheck;
 //!
 //! fn main() {
-//!     let client = DockerClient::connect("/var/run/docker.sock");
+//!     let client = DockerClient::new();
 //!
 //!     let health_check = HealthCheck::new().test("echo test").build();
 //!
-//!     let config = Config::with_image("alpine")
-//!         .name("name")
-//!         .health_check(Some(health_check))
-//!         .build();
+//!     let request = Create::new().name("name")
+//!         .config(
+//!             Config::with_image("alpine")
+//!                 .health_check(Some(health_check))
+//!                 .build()
+//!         ).build();
 //!
-//!     match client.create_container(config) {
+//!     match client.create_container(request) {
 //!         Ok(container) => { println!("{:?}", container); },
 //!         Err(_) => {},
 //!     }
