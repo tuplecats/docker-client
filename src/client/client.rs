@@ -1121,4 +1121,21 @@ impl DockerClient {
     }
 
 
+    pub fn pull_image(&self, request: crate::image::create::Request) -> Result<(), DockerError> {
+        let uri = self.make_uri(request.get_path());
+        let req = Request::post(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        self.execute(req)
+            .and_then(|response| {
+                match response.status {
+                    200 => Ok(()),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+    }
+
 }

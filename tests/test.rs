@@ -300,3 +300,18 @@ fn get_volumes_list() {
         Err(e) => println!("Error {:?}", e),
     }
 }
+
+#[test]
+fn test_pull_image() {
+    let client = client();
+
+    let request = docker_client::image::create::RequestBuilder::new()
+        .image("ubuntu")
+        .tag("latest")
+        .build();
+
+    match client.pull_image(request) {
+        Ok(_) => {},
+        Err(e) => println!("Error {:?}", e)
+    }
+}
