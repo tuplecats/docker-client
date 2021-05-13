@@ -37,3 +37,21 @@ pub struct ErrorMessage {
     /// Error message get from response.
     pub message: String,
 }
+
+impl DockerError {
+
+    pub fn get_error_message(&self) -> Option<String> {
+        match self {
+            DockerError::BadParameters(ref msg) => { Some(msg.message.clone()) }
+            DockerError::ServerError(ref msg) => { Some(msg.message.clone()) }
+            DockerError::NotFound(ref msg) => { Some(msg.message.clone()) }
+            DockerError::NotRunning(ref msg) => { Some(msg.message.clone()) }
+            DockerError::AlreadyStarted(ref msg) => { Some(msg.message.clone()) }
+            DockerError::ContainerExists(ref msg) => { Some(msg.message.clone()) }
+            DockerError::Busy(ref msg) => { Some(msg.message.clone()) }
+            DockerError::UnknownStatus => { None }
+            DockerError::ClosedConnection => { None }
+        }
+    }
+
+}
