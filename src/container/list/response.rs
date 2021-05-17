@@ -79,3 +79,19 @@ pub struct ShortContainerInfo {
     #[serde(rename(deserialize = "Mounts"))]
     mounts: Vec<Mount>,
 }
+
+impl ShortContainerInfo {
+
+    pub fn image(&self) -> &String {
+        &self.image
+    }
+
+    pub fn labels(&self) -> &HashMap<String, String> {
+        &self.labels
+    }
+
+    pub fn id(&self) -> &String {
+        &self.id
+    }
+
+}

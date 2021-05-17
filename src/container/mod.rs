@@ -7,7 +7,7 @@ pub mod inspect;
 pub mod remove;
 pub mod kill;
 pub mod health_check;
-mod list;
+pub mod list;
 mod fs_changes;
 mod wait;
 
@@ -26,4 +26,4 @@ pub use fs_changes::FSChanges;
 
 pub use wait::{WaitCondition, WaitStatus};
 
-pub use list::{ContainersList, ContainersListBuilder, ShortContainerInfo};
+pub use list::{ShortContainerInfo};

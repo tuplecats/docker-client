@@ -16,6 +16,6 @@ mod client;
 mod error;
 mod response;
 
-pub use client::DockerClient;
+pub use client::{DockerClient, Auth};
 pub use error::{DockerError, ErrorMessage};
 

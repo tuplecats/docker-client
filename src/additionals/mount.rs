@@ -48,11 +48,15 @@ pub struct TmpfsOptions {
 
 }
 
+fn default_read_only() -> bool {
+    false
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Mount {
 
     #[serde(rename(deserialize = "Target"))]
-    target: String,
+    target: Option<String>,
 
     #[serde(rename(deserialize = "Source"))]
     source: String,
@@ -60,17 +64,17 @@ pub struct Mount {
     #[serde(rename(deserialize = "Type"))]
     mount_type: String,
 
-    #[serde(rename(deserialize = "ReadOnly"))]
+    #[serde(rename(deserialize = "ReadOnly"), default = "default_read_only")]
     read_only: bool,
 
-    #[serde(rename(deserialize = "Consistency"))]
+    #[serde(rename(deserialize = "Consistency"), default = "String::new")]
     consistency: String,
 
     #[serde(rename(deserialize = "BindOptions"))]
-    bind_options: BindOptions,
+    bind_options: Option<BindOptions>,
 
     #[serde(rename(deserialize = "VolumeOptions"))]
-    volume_options: VolumeOptions,
+    volume_options: Option<VolumeOptions>,
 
     #[serde(rename(deserialize = "TmpfsOptions"), skip_serializing_if = "Option::is_none")]
     tmpfs_options: Option<TmpfsOptions>

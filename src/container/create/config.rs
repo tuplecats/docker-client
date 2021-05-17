@@ -4,6 +4,7 @@ use crate::additionals::network::NetworkSettings;
 use crate::container::HealthCheck;
 
 use crate::additionals::serde_helpers::*;
+use crate::additionals::host::host_config::HostConfig;
 
 #[derive(Debug, Default)]
 pub struct ConfigBuilder {
@@ -32,7 +33,7 @@ pub struct ConfigBuilder {
     stop_signal: Option<String>,
     stop_timeout: Option<i32>,
     shell: Vec<String>,
-    //host_config: Option<HostConfig>,
+    host_config: Option<HostConfig>,
     network_config: Option<NetworkSettings>,
 }
 
@@ -41,6 +42,12 @@ impl ConfigBuilder {
     /// Creates a new default instance of `ConfigBuilder` to construct a `Config`.
     pub fn new() -> Self {
         ConfigBuilder::default()
+    }
+
+    pub fn host_config(&mut self, cfg: HostConfig) -> &mut Self {
+        self.host_config = Some(cfg);
+
+        self
     }
 
     /// Creates a new `ConfigBuilder` initialized with `image`.
@@ -509,6 +516,7 @@ impl ConfigBuilder {
             attach_stdin: self.attach_stdin.clone(),
             attach_stdout: self.attach_stdout.clone(),
             attach_stderr: self.attach_stderr.clone(),
+            exposed_ports: self.exposed_ports.clone(),
             tty: self.tty.clone(),
             open_stdin: self.open_stdin.clone(),
             stdin_once: self.stdin_once.clone(),
@@ -521,7 +529,8 @@ impl ConfigBuilder {
             health_check: self.health_check.clone(),
             work_dir: self.work_dir.clone(),
             network_disabled: self.network_disabled.clone(),
-            network_config: self.network_config.clone()
+            network_config: self.network_config.clone(),
+            host_config: self.host_config.clone()
         }
     }
 }
@@ -547,6 +556,9 @@ pub struct Config {
 
     #[serde(skip_serializing_if = "Option::is_none", rename = "AttachStderr")]
     attach_stderr: Option<bool>,
+
+    #[serde(skip_serializing_if = "HashMap::is_empty", rename = "ExposedPorts", default)]
+    exposed_ports: HashMap<String, EmptyObject>,
 
     #[serde(skip_serializing_if = "Option::is_none", rename = "Tty")]
     tty: Option<bool>,
@@ -586,6 +598,9 @@ pub struct Config {
 
     #[serde(skip_serializing_if = "Option::is_none", rename = "NetworkConfig")]
     network_config: Option<NetworkSettings>,
+
+    #[serde(skip_serializing_if = "Option::is_none", rename = "HostConfig")]
+    host_config: Option<HostConfig>
 }
 
 impl Config {

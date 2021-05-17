@@ -21,8 +21,14 @@ pub enum DockerError {
     /// Server error (HTTP status is 409)
     ContainerExists(ErrorMessage), // 409
 
+    /// Server error (HTTP status is 409)
+    NetworkExists(ErrorMessage), // 409
+
     /// Busy by container (HTTP status is 409)
     Busy(ErrorMessage), // 409
+
+    /// Container paused
+    ContainerPaused(ErrorMessage),
 
     /// Unknown status
     UnknownStatus,
@@ -49,6 +55,8 @@ impl DockerError {
             DockerError::AlreadyStarted(ref msg) => { Some(msg.message.clone()) }
             DockerError::ContainerExists(ref msg) => { Some(msg.message.clone()) }
             DockerError::Busy(ref msg) => { Some(msg.message.clone()) }
+            DockerError::NetworkExists(ref msg) => { Some(msg.message.clone()) }
+            DockerError::ContainerPaused(ref msg) => { Some(msg.message.clone()) }
             DockerError::UnknownStatus => { None }
             DockerError::ClosedConnection => { None }
         }

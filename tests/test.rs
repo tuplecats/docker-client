@@ -3,7 +3,7 @@ extern crate docker_client;
 use docker_client::{DockerClient, DockerError};
 use docker_client::container::{Remover, Killer, Config, HealthCheck, WaitCondition, Create};
 use docker_client::volume::VolumeCreator;
-use docker_client::container::ContainersList;
+use docker_client::container::Request;
 use docker_client::container::inspect::Inspect;
 use docker_client::container::processes_list::ProcessesList;
 use std::path::Path;
@@ -16,7 +16,7 @@ fn client() -> DockerClient {
 fn test_list_containers() {
     let client = client();
 
-    let req = ContainersList::new().all(true).build();
+    let req = Request::new().all(true).build();
 
     match client.containers_list(req) {
         Ok(v) => { println!("{:?}", v); },

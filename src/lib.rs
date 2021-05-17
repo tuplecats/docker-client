@@ -51,11 +51,15 @@ extern crate futures;
 extern crate tokio;
 extern crate tokio_core;
 
+extern crate base64;
+
 pub mod container;
 pub mod client;
 pub mod image;
 pub mod volume;
 pub mod additionals;
+pub mod networks;
+pub mod exec;
 
 pub use client::DockerError;
 pub use client::DockerClient;

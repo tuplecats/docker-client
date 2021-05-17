@@ -2,7 +2,7 @@ use serde_json as json;
 
 use crate::container::{Killer, Remover, CreatedContainer, WaitCondition, WaitStatus, Create};
 use crate::container::FSChanges;
-use crate::container::{ShortContainerInfo, ContainersList};
+use crate::container::{ShortContainerInfo};
 use crate::container::inspect::{Inspect, ContainerInfo};
 use crate::container::processes_list::{ProcessesList, TopList};
 
@@ -10,6 +10,8 @@ use crate::client::DockerError;
 use crate::client::response::DockerResponse;
 
 use hyper::{Client, Request};
+
+use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "unix-socket")]
 use hyperlocal::UnixConnector;
@@ -24,6 +26,8 @@ use hyper::client::HttpConnector;
 use std::env;
 use std::borrow::Borrow;
 use std::path::Path;
+use hyper::http::HeaderValue;
+use std::io::Write;
 
 #[derive(Debug, Clone)]
 pub enum ClientConfig {
@@ -36,11 +40,22 @@ pub enum ClientConfig {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Auth {
+    pub username: String,
+    pub password: String,
+    pub email: String,
+
+    #[serde(rename = "serveraddress", skip_serializing_if = "Option::is_none")]
+    pub server_address: Option<String>
+}
+
 /// `DockerClient` struct.
 #[derive(Debug, Clone)]
 pub struct DockerClient {
     host: String,
     config: ClientConfig,
+    auth: Option<Auth>
 }
 
 impl DockerClient {
@@ -65,23 +80,36 @@ impl DockerClient {
             Some(host) => {
                 #[cfg(feature = "unix-socket")]
                 if let Some(path) = host.strip_prefix("unix://") {
-                    return DockerClient::unix(path);
+                    return DockerClient::unix(path, None);
                 }
-                DockerClient::stream(host)
+                DockerClient::stream(host, None)
             },
             #[cfg(feature = "unix-socket")]
             None => {
-                DockerClient::unix("/var/run/docker.sock")
+                DockerClient::unix("/var/run/docker.sock", None)
             },
             None => {
-                DockerClient::stream("tcp://localhost:2375")
+                DockerClient::stream("tcp://localhost:2375", None)
             }
         }
 
     }
 
+    pub fn with_auth(auth: Auth) -> Self {
+        let mut ctx = Self::new();
+        ctx.auth = Some(auth);
+        ctx
+    }
+
+    pub fn registry_auth(&self) -> String {
+        //let auth = self.auth.clone().unwrap();
+        base64::encode(
+            json::to_string(&self.auth.as_ref().unwrap()).unwrap()
+        )
+    }
+
     #[cfg(feature = "unix-socket")]
-    pub fn unix<T>(host: T) -> DockerClient
+    pub fn unix<T>(host: T, auth: Option<Auth>) -> DockerClient
         where T: Into<String>
     {
         DockerClient {
@@ -90,11 +118,12 @@ impl DockerClient {
                 client: Client::builder()
                     .pool_max_idle_per_host(0)
                     .build:: < _, hyper::Body>(UnixConnector::default())
-            }
+            },
+            auth
         }
     }
 
-    pub fn stream<T>(host: T) -> DockerClient
+    pub fn stream<T>(host: T, auth: Option<Auth>) -> DockerClient
         where T: Into<String>
     {
         DockerClient {
@@ -103,7 +132,8 @@ impl DockerClient {
                 client: Client::builder()
                     .pool_max_idle_per_host(0)
                     .build::<_, hyper::Body>(HttpConnector::new())
-            }
+            },
+            auth
         }
     }
 
@@ -124,6 +154,7 @@ impl DockerClient {
             }
         }
     }
+
 
     fn execute(&self, request: hyper::Request<hyper::Body>) -> Result<DockerResponse, DockerError> {
 
@@ -178,7 +209,7 @@ impl DockerClient {
 
     }
 
-    pub fn containers_list(&self, request: ContainersList) -> Result<Vec<ShortContainerInfo>, DockerError> {
+    pub fn containers_list(&self, request: crate::container::list::Request) -> Result<Vec<ShortContainerInfo>, DockerError> {
 
         let uri = self.make_uri(request.get_path());
         //let uri: hyper::Uri = Uri::new(self.host.as_str(), request.get_path().as_str()).into();
@@ -320,8 +351,10 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn start_container<T>(&self, id: T, _detach_keys: T) -> Result<(), DockerError>
-        where T: Into<String>
+    pub fn start_container<T, U>(&self, id: T, _detach_keys: U) -> Result<(), DockerError>
+        where
+            T: Into<String>,
+            U: Into<String>
     {
         let path = format!("/containers/{}/start", id.into());
 
@@ -1123,7 +1156,47 @@ impl DockerClient {
 
     pub fn pull_image(&self, request: crate::image::create::Request) -> Result<(), DockerError> {
         let uri = self.make_uri(request.get_path());
+        let mut request_builder = Request::post(uri);
+
+        if self.auth.is_some() {
+            request_builder = request_builder.header("X-Registry-Auth", self.registry_auth());
+        }
+
+        let request = request_builder.body(hyper::Body::empty()).unwrap();
+
+        self.execute(request)
+            .and_then(|response| {
+                match response.status {
+                    200 => Ok(()),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+    }
+
+    pub fn create_network(&self, request: crate::networks::create::Request) -> Result<crate::networks::create::CreatedNetwork, DockerError> {
+        let uri = self.make_uri(request.get_path());
         let req = Request::post(uri)
+            .header(hyper::header::CONTENT_TYPE, "application/json")
+            .body(hyper::Body::from(json::to_string(&request).unwrap()))
+            .unwrap();
+
+        self.execute(req)
+            .and_then(|response| {
+                match response.status {
+                    201 => Ok(json::from_str(response.body_as_string().as_str()).unwrap()),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    409 => Err(DockerError::NetworkExists(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+    }
+
+    pub fn inspect_network(&self, request: crate::networks::inspect::Request) -> Result<(), DockerError> {
+        let uri = self.make_uri(request.get_path());
+        let req = Request::get(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
@@ -1131,6 +1204,80 @@ impl DockerClient {
             .and_then(|response| {
                 match response.status {
                     200 => Ok(()),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+    }
+
+    pub fn connect_container_to_network(&self, request: crate::networks::connect::Request) -> Result<(), DockerError> {
+        let uri = self.make_uri(request.get_path());
+        let req = Request::post(uri)
+            .header(hyper::header::CONTENT_TYPE, "application/json")
+            .body(hyper::Body::from(json::to_string(&request).unwrap()))
+            .unwrap();
+
+        self.execute(req)
+            .and_then(|response| {
+                match response.status {
+                    200 => Ok(()),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+    }
+
+    pub fn create_exec_instance(&self, request: crate::exec::create::Request) -> Result<String, DockerError> {
+        let uri = self.make_uri(request.get_path());
+        let req = Request::post(uri)
+            .header(hyper::header::CONTENT_TYPE, "application/json")
+            .body(hyper::Body::from(json::to_string(&request).unwrap()))
+            .unwrap();
+
+        self.execute(req)
+            .and_then(|response| {
+                match response.status {
+                    201 => Ok(json::from_str::<crate::exec::create::Exec>(response.body_as_string().as_str()).unwrap().id),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    409 => Err(DockerError::ContainerPaused(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+    }
+
+    pub fn start_exec(&self, id: String) -> Result<(), DockerError> {
+        let uri = self.make_uri(format!("/exec/{}/start", &id));
+        let req = Request::post(uri)
+            .header(hyper::header::CONTENT_TYPE, "application/json")
+            .body(hyper::body::Body::from("{}"))
+            .unwrap();
+
+        self.execute(req)
+            .and_then(|response| {
+                match response.status {
+                    200 => Ok(()),
+                    400 => Err(DockerError::BadParameters(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    404 => Err(DockerError::NotFound(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    409 => Err(DockerError::ContainerPaused(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    500 => Err(DockerError::ServerError(json::from_str(response.body_as_string().as_str()).unwrap())),
+                    _ => Err(DockerError::UnknownStatus),
+                }
+            })
+    }
+
+    pub fn inspect_exec(&self, id: String) -> Result<crate::exec::inspect::ExecStatus, DockerError> {
+        let uri = self.make_uri(format!("/exec/{}/json", &id));
+        let req = Request::get(uri)
+            .body(hyper::Body::empty())
+            .unwrap();
+
+        self.execute(req)
+            .and_then(|response| {
+                match response.status {
+                    200 => Ok(json::from_str(response.body_as_string().as_str()).unwrap()),
                     404 => Err(DockerError::NotFound(json::from_str(response.body_as_string().as_str()).unwrap())),
                     500 => Err(DockerError::ServerError(json::from_str(response.body_as_string().as_str()).unwrap())),
                     _ => Err(DockerError::UnknownStatus),
