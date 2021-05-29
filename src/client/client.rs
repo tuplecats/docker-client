@@ -175,8 +175,6 @@ impl DockerClient {
     }
 
     fn execute(&self, request: hyper::Request<hyper::Body>) -> Result<DockerResponse, DockerError> {
-        let config = self.config.clone();
-
         let resp_fut = self.execute_async(request);
 
         let rt = Runtime::new().unwrap();
@@ -189,14 +187,12 @@ impl DockerClient {
 
 impl DockerClient {
 
-    pub fn top(&self, request: ProcessesList) -> Result<TopList, DockerError> {
+    pub async fn top(&self, request: ProcessesList) -> Result<TopList, DockerError> {
 
         let uri = self.make_uri(request.get_path());
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), request.get_path().as_str()).into();
-
         let request = Request::get(uri).body(hyper::Body::empty()).unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     200 => Ok(json::from_str(response.body_as_string().as_str()).unwrap()),
@@ -206,7 +202,6 @@ impl DockerClient {
                 }
             })
             .map_err(|e| e)
-
     }
 
     pub fn containers_list(&self, request: crate::container::list::Request) -> Result<Vec<ShortContainerInfo>, DockerError> {
