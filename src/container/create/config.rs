@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize, Deserializer};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use crate::additionals::network::NetworkSettings;
 use crate::container::HealthCheck;

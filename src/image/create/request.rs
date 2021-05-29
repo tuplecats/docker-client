@@ -1,4 +1,4 @@
-use std::ops::Add;
+
 
 #[derive(Default)]
 pub struct RequestBuilder {
@@ -78,7 +78,7 @@ impl RequestBuilder {
             repo: self.repo.clone(),
             tag: match self.tag.as_str() {
                 "" => String::from("latest"),
-                v=> self.tag.clone()
+                _=> self.tag.clone()
             },
             message: self.message.clone(),
             platform: self.platform.clone()

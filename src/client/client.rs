@@ -20,14 +20,10 @@ use hyper::Uri;
 
 use crate::image::ShortImageInfo;
 use crate::volume::{VolumeCreator, VolumeInfo, DeletedInfo, VolumesList};
-use tokio::runtime::Runtime;
 use hyper::client::HttpConnector;
 
 use std::env;
-use std::borrow::Borrow;
 use std::path::Path;
-use hyper::http::HeaderValue;
-use std::io::Write;
 
 #[derive(Debug, Clone)]
 pub enum ClientConfig {
@@ -172,14 +168,6 @@ impl DockerClient {
             ),
             Err(_) => Err(DockerError::ClosedConnection)
         }
-    }
-
-    fn execute(&self, request: hyper::Request<hyper::Body>) -> Result<DockerResponse, DockerError> {
-        let resp_fut = self.execute_async(request);
-
-        let rt = Runtime::new().unwrap();
-
-        rt.block_on(resp_fut)
     }
 
 }
@@ -839,7 +827,7 @@ impl DockerClient {
                 match response.status {
                     200 => {
                         response.save_to_file(file)
-                            .map_err(|r| DockerError::UnknownStatus)
+                            .map_err(|_| DockerError::UnknownStatus)
                     },
                     404 => Err(DockerError::NotFound(json::from_str(response.body_as_string().as_str()).unwrap())),
                     500 => Err(DockerError::ServerError(json::from_str(response.body_as_string().as_str()).unwrap())),

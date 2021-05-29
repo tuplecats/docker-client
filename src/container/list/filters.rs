@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use serde::ser::{SerializeSeq};
-use serde::{Serialize, Deserialize, Serializer};
+use serde::{Serialize, Serializer};
 
 #[derive(Default)]
 pub struct FiltersBuilder {

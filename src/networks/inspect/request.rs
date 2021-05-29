@@ -56,7 +56,17 @@ impl Request {
     }
 
     pub fn get_path(&self) -> String {
-        format!("/networks/{}", self.id)
+        let mut path = format!("/networks/{}?", self.id);
+
+        if self.verbose {
+            path.push_str("verbose=true&")
+        }
+
+        if !self.scope.is_empty() {
+            path.push_str(format!("scope={}", self.scope.as_str()).as_str())
+        }
+
+        path
     }
 
 }

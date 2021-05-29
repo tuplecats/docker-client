@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use super::Filters;
 //request
 #[derive(Default)]
