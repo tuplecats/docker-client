@@ -155,33 +155,33 @@ impl DockerClient {
         }
     }
 
+    async fn execute_async(&self, request: hyper::Request<hyper::Body>) -> Result<DockerResponse, DockerError> {
+        let config = self.config.clone();
+        let response = match config {
+            ClientConfig::TCP { ref client, ..} => client.request(request).await,
+            #[cfg(feature = "unix-socket")]
+            ClientConfig::UNIX { ref client, ..} => client.request(request).await
+        };
+
+        match response {
+            Ok(resp) => Ok(
+                DockerResponse {
+                    status: resp.status().as_u16(),
+                    body: hyper::body::to_bytes(resp.into_body()).await.unwrap()
+                }
+            ),
+            Err(_) => Err(DockerError::ClosedConnection)
+        }
+    }
 
     fn execute(&self, request: hyper::Request<hyper::Body>) -> Result<DockerResponse, DockerError> {
-
         let config = self.config.clone();
 
-        let resp_fut = async {
-            let resp = match config {
-                ClientConfig::TCP { ref client, ..} => client.request(request).await,
-                #[cfg(feature = "unix-socket")]
-                ClientConfig::UNIX { ref client, ..} => client.request(request).await
-            };
-
-            match resp {
-                Ok(v) => Ok(
-                    DockerResponse {
-                        status: v.status().as_u16(),
-                        body: hyper::body::to_bytes(v.into_body()).await.unwrap()
-                    }
-                ),
-                Err(_) => Err(DockerError::ClosedConnection)
-            }
-        };
+        let resp_fut = self.execute_async(request);
 
         let rt = Runtime::new().unwrap();
 
         rt.block_on(resp_fut)
-
     }
 
 }
