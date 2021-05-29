@@ -204,14 +204,12 @@ impl DockerClient {
             .map_err(|e| e)
     }
 
-    pub fn containers_list(&self, request: crate::container::list::Request) -> Result<Vec<ShortContainerInfo>, DockerError> {
+    pub async fn containers_list(&self, request: crate::container::list::Request) -> Result<Vec<ShortContainerInfo>, DockerError> {
 
         let uri = self.make_uri(request.get_path());
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), request.get_path().as_str()).into();
-
         let request = Request::get(uri).body(hyper::Body::empty()).unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     200 => Ok(json::from_str(response.body_as_string().as_str()).unwrap()),
@@ -246,17 +244,16 @@ impl DockerClient {
     ///     }
     /// }
     /// ```
-    pub fn create_container(&self, request: Create) -> Result<CreatedContainer, DockerError> {
+    pub async fn create_container(&self, request: Create) -> Result<CreatedContainer, DockerError> {
 
         let uri = self.make_uri(request.get_path());
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), request.get_path().as_str()).into();
 
         let request = Request::post(uri)
             .header("Content-Type", "application/json")
             .body(hyper::Body::from(request.body()))
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     201 => Ok(json::from_str(response.body_as_string().as_str()).unwrap()),
@@ -290,19 +287,16 @@ impl DockerClient {
     ///     }
     /// }
     /// ```
-    pub fn get_fs_changes<T>(&self, id: T) -> Result<Vec<FSChanges>, DockerError>
+    pub async fn get_fs_changes<T>(&self, id: T) -> Result<Vec<FSChanges>, DockerError>
         where T: Into<String>
     {
-        let path = format!("/containers/{}/changes", id.into());
 
-        let uri = self.make_uri(path);
-        //let url: hyper::Uri = Uri::new(self.host.as_str(), path.as_str()).into();
-
+        let uri = self.make_uri(format!("/containers/{}/changes", id.into()));
         let request = Request::get(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     200 => {
@@ -315,8 +309,6 @@ impl DockerClient {
                 }
             })
             .map_err(|e| e)
-
-
     }
 
     /// Start a container.
@@ -346,21 +338,18 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn start_container<T, U>(&self, id: T, _detach_keys: U) -> Result<(), DockerError>
+    pub async fn start_container<T, U>(&self, id: T, _detach_keys: U) -> Result<(), DockerError>
         where
             T: Into<String>,
             U: Into<String>
     {
-        let path = format!("/containers/{}/start", id.into());
 
-        let uri = self.make_uri(path);
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), path.as_str()).into();
-
+        let uri = self.make_uri(format!("/containers/{}/start", id.into()));
         let request = Request::post(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     204 => Ok(()),
@@ -401,19 +390,17 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn stop_container<T>(&self, id: T, _wait: Option<i32>) -> Result<(), DockerError>
+    pub async fn stop_container<T>(&self, id: T, _wait: Option<i32>) -> Result<(), DockerError>
         where T: Into<String>
     {
         let path = format!("/containers/{}/stop", id.into());
 
         let uri = self.make_uri(path);
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), path.as_str()).into();
-
         let request = Request::post(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     204 => Ok(()),
@@ -452,19 +439,16 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn pause_container<T>(&self, id: T) -> Result<(), DockerError>
+    pub async fn pause_container<T>(&self, id: T) -> Result<(), DockerError>
         where T: Into<String>
     {
-        let path = format!("/containers/{}/pause", id.into());
 
-        let uri = self.make_uri(path);
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), path.as_str()).into();
-
+        let uri = self.make_uri(format!("/containers/{}/pause", id.into()));
         let request = Request::post(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     204 => Ok(()),
@@ -502,19 +486,15 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn unpause_container<T>(&self, id: T) -> Result<(), DockerError>
+    pub async fn unpause_container<T>(&self, id: T) -> Result<(), DockerError>
         where T: Into<String> {
 
-        let path = format!("/containers/{}/unpause", id.into());
-
-        let uri = self.make_uri(path);
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), path.as_str()).into();
-
+        let uri = self.make_uri(format!("/containers/{}/unpause", id.into()));
         let request = Request::post(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     204 => Ok(()),
@@ -554,19 +534,16 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn rename_container<T>(&self, id: T, new_name: T) -> Result<(), DockerError>
-        where T: Into<String> {
+    pub async fn rename_container<T>(&self, id: T, new_name: T) -> Result<(), DockerError>
+        where T: Into<String>
+    {
 
-        let path = format!("/containers/{}/rename?name={}", id.into(), new_name.into());
-
-        let uri = self.make_uri(path);
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), path.as_str()).into();
-
+        let uri = self.make_uri(format!("/containers/{}/rename?name={}", id.into(), new_name.into()));
         let request = Request::post(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     204 => Ok(()),
@@ -612,16 +589,14 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn kill_container(&self, killer: Killer) -> Result<(), DockerError> {
+    pub async fn kill_container(&self, killer: Killer) -> Result<(), DockerError> {
 
         let uri = self.make_uri(killer.get_path());
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), killer.get_path().as_str()).into();
-
         let request = Request::post(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     204 => Ok(()),
@@ -670,16 +645,14 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn remove_container(&self, remover: Remover) -> Result<(), DockerError> {
+    pub async fn remove_container(&self, remover: Remover) -> Result<(), DockerError> {
 
         let uri = self.make_uri(remover.get_path());
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), remover.get_path().as_str()).into();
-
         let request = Request::delete(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     204 => Ok(()),
@@ -718,16 +691,14 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn inspect_container(&self, request: Inspect) -> Result<ContainerInfo, DockerError> {
+    pub async fn inspect_container(&self, request: Inspect) -> Result<ContainerInfo, DockerError> {
 
         let uri = self.make_uri(request.get_path());
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), request.get_path().as_str()).into();
-
         let request = Request::get(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     200 => Ok(json::from_str(response.body_as_string().as_str()).unwrap()),
@@ -763,19 +734,16 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn get_container_log<T>(&self, id: T) -> Result<String, DockerError>
+    pub async fn get_container_log<T>(&self, id: T) -> Result<String, DockerError>
         where T: Into<String>
     {
-        let path = format!("/containers/{}/logs?stdout=true", id.into());
 
-        let uri = self.make_uri(path);
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), path.as_str()).into();
-
+        let uri = self.make_uri(format!("/containers/{}/logs?stdout=true", id.into()));
         let request = Request::get(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     200 => Ok(response.body_as_string()),
@@ -811,19 +779,15 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn wait_container<T>(&self, id: T, condition: WaitCondition) -> Result<WaitStatus, DockerError>
+    pub async fn wait_container<T>(&self, id: T, condition: WaitCondition) -> Result<WaitStatus, DockerError>
         where T: Into<String>
     {
-        let path = format!("/containers/{}/wait?condition={}", id.into(), condition.to_string());
-
-        let uri = self.make_uri(path);
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), path.as_str()).into();
-
+        let uri = self.make_uri(format!("/containers/{}/wait?condition={}", id.into(), condition.to_string()));
         let request = Request::post(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     200 => Ok(json::from_str(response.body_as_string().as_str()).unwrap()),
@@ -861,19 +825,16 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn export_container<T>(&self, id: T, file: &Path) -> Result<(), DockerError>
+    pub async fn export_container<T>(&self, id: T, file: &Path) -> Result<(), DockerError>
         where T: Into<String>
     {
-        let path = format!("/containers/{}/export", id.into());
 
-        let uri = self.make_uri(path);
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), path.as_str()).into();
-
+        let uri = self.make_uri(format!("/containers/{}/export", id.into()));
         let request = Request::get(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     200 => {
@@ -905,18 +866,14 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn get_image_list(&self) -> Result<Vec<ShortImageInfo>, DockerError> {
+    pub async fn get_image_list(&self) -> Result<Vec<ShortImageInfo>, DockerError> {
 
-        let path = "/images/json";
-
-        let uri = self.make_uri(path);
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), path).into();
-
+        let uri = self.make_uri("/images/json");
         let request = Request::get(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     200 => Ok(json::from_str(response.body_as_string().as_str()).unwrap()),
@@ -952,19 +909,15 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn create_volume(&self, volume: VolumeCreator) -> Result<(), DockerError> {
+    pub async fn create_volume(&self, volume: VolumeCreator) -> Result<(), DockerError> {
 
-        let path = "/volumes/create";
-
-        let uri = self.make_uri(path);
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), path).into();
-
+        let uri = self.make_uri("/volumes/create");
         let request = Request::post(uri)
             .header("Content-Type", "application/json")
             .body(hyper::Body::from(json::to_string(&volume).unwrap()))
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     201 => Ok(()),
@@ -996,19 +949,16 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn inspect_volume<T>(&self, name: T) -> Result<VolumeInfo, DockerError>
+    pub async fn inspect_volume<T>(&self, name: T) -> Result<VolumeInfo, DockerError>
         where T: Into<String>
     {
 
-        let path = format!("/volumes/{}", name.into());
-        let uri = self.make_uri(path);
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), path.as_str()).into();
-
+        let uri = self.make_uri(format!("/volumes/{}", name.into()));
         let request = Request::get(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     200 => Ok(json::from_str(response.body_as_string().as_str()).unwrap()),
@@ -1042,20 +992,16 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn remove_volume<T>(&self, name: T, force: bool) -> Result<(), DockerError>
+    pub async fn remove_volume<T>(&self, name: T, force: bool) -> Result<(), DockerError>
         where T: Into<String>
     {
 
-        let path = format!("/volumes/{}?force={}", name.into(), force.to_string());
-
-        let uri = self.make_uri(path);
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), path.as_str()).into();
-
+        let uri = self.make_uri(format!("/volumes/{}?force={}", name.into(), force.to_string()));
         let request = Request::delete(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     204 => Ok(()),
@@ -1086,18 +1032,14 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn delete_unused_volumes(&self) -> Result<DeletedInfo, DockerError> {
+    pub async fn delete_unused_volumes(&self) -> Result<DeletedInfo, DockerError> {
 
-        let path = "/volumes/prune";
-
-        let uri = self.make_uri(path);
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), path).into();
-
+        let uri = self.make_uri("/volumes/prune");
         let request = Request::post(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     200 => Ok(json::from_str(response.body_as_string().as_str()).unwrap()),
@@ -1126,18 +1068,14 @@ impl DockerClient {
     ///
     /// }
     /// ```
-    pub fn get_volumes_list(&self) -> Result<VolumesList, DockerError> {
+    pub async fn get_volumes_list(&self) -> Result<VolumesList, DockerError> {
 
-        let path = "/volumes";
-
-        let uri = self.make_uri(path);
-        //let uri: hyper::Uri = Uri::new(self.host.as_str(), path).into();
-
+        let uri = self.make_uri("/volumes");
         let request = Request::get(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     200 => Ok(json::from_str(response.body_as_string().as_str()).unwrap()),
@@ -1149,7 +1087,7 @@ impl DockerClient {
     }
 
 
-    pub fn pull_image(&self, request: crate::image::create::Request) -> Result<(), DockerError> {
+    pub async fn pull_image(&self, request: crate::image::create::Request) -> Result<(), DockerError> {
         let uri = self.make_uri(request.get_path());
         let mut request_builder = Request::post(uri);
 
@@ -1159,7 +1097,7 @@ impl DockerClient {
 
         let request = request_builder.body(hyper::Body::empty()).unwrap();
 
-        self.execute(request)
+        self.execute_async(request).await
             .and_then(|response| {
                 match response.status {
                     200 => Ok(()),
@@ -1170,14 +1108,14 @@ impl DockerClient {
             })
     }
 
-    pub fn create_network(&self, request: crate::networks::create::Request) -> Result<crate::networks::create::CreatedNetwork, DockerError> {
+    pub async fn create_network(&self, request: crate::networks::create::Request) -> Result<crate::networks::create::CreatedNetwork, DockerError> {
         let uri = self.make_uri(request.get_path());
         let req = Request::post(uri)
             .header(hyper::header::CONTENT_TYPE, "application/json")
             .body(hyper::Body::from(json::to_string(&request).unwrap()))
             .unwrap();
 
-        self.execute(req)
+        self.execute_async(req).await
             .and_then(|response| {
                 match response.status {
                     201 => Ok(json::from_str(response.body_as_string().as_str()).unwrap()),
@@ -1189,13 +1127,13 @@ impl DockerClient {
             })
     }
 
-    pub fn inspect_network(&self, request: crate::networks::inspect::Request) -> Result<(), DockerError> {
+    pub async fn inspect_network(&self, request: crate::networks::inspect::Request) -> Result<(), DockerError> {
         let uri = self.make_uri(request.get_path());
         let req = Request::get(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(req)
+        self.execute_async(req).await
             .and_then(|response| {
                 match response.status {
                     200 => Ok(()),
@@ -1206,14 +1144,14 @@ impl DockerClient {
             })
     }
 
-    pub fn connect_container_to_network(&self, request: crate::networks::connect::Request) -> Result<(), DockerError> {
+    pub async fn connect_container_to_network(&self, request: crate::networks::connect::Request) -> Result<(), DockerError> {
         let uri = self.make_uri(request.get_path());
         let req = Request::post(uri)
             .header(hyper::header::CONTENT_TYPE, "application/json")
             .body(hyper::Body::from(json::to_string(&request).unwrap()))
             .unwrap();
 
-        self.execute(req)
+        self.execute_async(req).await
             .and_then(|response| {
                 match response.status {
                     200 => Ok(()),
@@ -1224,14 +1162,14 @@ impl DockerClient {
             })
     }
 
-    pub fn create_exec_instance(&self, request: crate::exec::create::Request) -> Result<String, DockerError> {
+    pub async fn create_exec_instance(&self, request: crate::exec::create::Request) -> Result<String, DockerError> {
         let uri = self.make_uri(request.get_path());
         let req = Request::post(uri)
             .header(hyper::header::CONTENT_TYPE, "application/json")
             .body(hyper::Body::from(json::to_string(&request).unwrap()))
             .unwrap();
 
-        self.execute(req)
+        self.execute_async(req).await
             .and_then(|response| {
                 match response.status {
                     201 => Ok(json::from_str::<crate::exec::create::Exec>(response.body_as_string().as_str()).unwrap().id),
@@ -1243,14 +1181,14 @@ impl DockerClient {
             })
     }
 
-    pub fn start_exec(&self, id: String) -> Result<(), DockerError> {
+    pub async fn start_exec(&self, id: String) -> Result<(), DockerError> {
         let uri = self.make_uri(format!("/exec/{}/start", &id));
         let req = Request::post(uri)
             .header(hyper::header::CONTENT_TYPE, "application/json")
             .body(hyper::body::Body::from("{}"))
             .unwrap();
 
-        self.execute(req)
+        self.execute_async(req).await
             .and_then(|response| {
                 match response.status {
                     200 => Ok(()),
@@ -1263,13 +1201,13 @@ impl DockerClient {
             })
     }
 
-    pub fn inspect_exec(&self, id: String) -> Result<crate::exec::inspect::ExecStatus, DockerError> {
+    pub async fn inspect_exec(&self, id: String) -> Result<crate::exec::inspect::ExecStatus, DockerError> {
         let uri = self.make_uri(format!("/exec/{}/json", &id));
         let req = Request::get(uri)
             .body(hyper::Body::empty())
             .unwrap();
 
-        self.execute(req)
+        self.execute_async(req).await
             .and_then(|response| {
                 match response.status {
                     200 => Ok(json::from_str(response.body_as_string().as_str()).unwrap()),
