@@ -21,14 +21,15 @@
 //! use docker_client::DockerClient;
 //! use docker_client::Remover;
 //!
-//! fn main() {
+//! #[tokio::main]
+//! async fn main() {
 //!     let client = DockerClient::new();
 //!
 //!     let remover = Remover::new()
 //!         .id("example-remove")
 //!         .build();
 //!
-//!     match client.remove_container(remover) {
+//!     match client.remove_container(remover).await {
 //!         Ok(_) => {},
 //!         Err(_) => {},
 //!     }
@@ -96,7 +97,7 @@ impl RemoverBuilder {
     ///     .id("container-id-or-name")
     ///     .build();
     /// ```
-    pub fn id<T>(&mut self, id: T) -> &mut Self
+    pub fn id<T>(mut self, id: T) -> Self
         where T: Into<String>
     {
         self.id = id.into();
@@ -114,7 +115,7 @@ impl RemoverBuilder {
     ///     .with_remove_volumes(true)
     ///     .build();
     /// ```
-    pub fn with_remove_volumes(&mut self, v: bool) -> &mut Self {
+    pub fn with_remove_volumes(mut self, v: bool) -> Self {
         self.v = Some(v);
 
         self
@@ -130,7 +131,7 @@ impl RemoverBuilder {
     ///     .with_force_delete(true)
     ///     .build();
     /// ```
-    pub fn with_force_delete(&mut self, v: bool) -> &mut Self {
+    pub fn with_force_delete(mut self, v: bool) -> Self {
         self.force = Some(v);
 
         self
@@ -144,7 +145,7 @@ impl RemoverBuilder {
     /// # use docker_client::container::RemoverBuilder;
     /// let builder = RemoverBuilder::new().build();
     /// ```
-    pub fn with_remove_link(&mut self, v: bool) -> &mut Self {
+    pub fn with_remove_link(mut self, v: bool) -> Self {
         self.link = Some(v);
 
         self
@@ -160,9 +161,9 @@ impl RemoverBuilder {
     ///     .id("container-id-or-name")
     ///     .build();
     /// ```
-    pub fn build(&self) -> Remover {
+    pub fn build(self) -> Remover {
         Remover {
-            id: self.id.clone(),
+            id: self.id,
             v: self.v,
             force: self.force,
             link: self.link

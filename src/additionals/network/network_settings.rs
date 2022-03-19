@@ -23,15 +23,15 @@ impl NetworkSettingsBuilder {
         NetworkSettingsBuilder::default()
     }
 
-    pub fn add_config(&mut self, name: String, config: &Network) -> &mut Self {
+    pub fn add_config(mut self, name: String, config: &Network) -> Self {
         self.networks.insert(name, config.clone());
 
         self
     }
 
-    pub fn build(&self) -> NetworkSettings {
+    pub fn build(self) -> NetworkSettings {
         NetworkSettings {
-            networks: self.networks.clone()
+            networks: self.networks
         }
     }
 

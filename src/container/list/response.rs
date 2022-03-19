@@ -82,7 +82,7 @@ pub struct ShortContainerInfo {
 
 impl ShortContainerInfo {
 
-    pub fn image(&self) -> &String {
+    pub fn image(&self) -> &str {
         &self.image
     }
 
@@ -90,7 +90,7 @@ impl ShortContainerInfo {
         &self.labels
     }
 
-    pub fn id(&self) -> &String {
+    pub fn id(&self) -> &str {
         &self.id
     }
 

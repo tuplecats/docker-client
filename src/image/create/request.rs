@@ -23,7 +23,7 @@ impl RequestBuilder {
         RequestBuilder::default()
     }
 
-    pub fn image<T>(&mut self, image: T) -> &mut Self
+    pub fn image<T>(mut self, image: T) -> Self
         where T: Into<String>
     {
         self.from_image = image.into();
@@ -31,7 +31,7 @@ impl RequestBuilder {
         self
     }
 
-    pub fn source<T>(&mut self, source: T) -> &mut Self
+    pub fn source<T>(mut self, source: T) -> Self
         where T: Into<String>
     {
         self.from_src = source.into();
@@ -39,7 +39,7 @@ impl RequestBuilder {
         self
     }
 
-    pub fn repo<T>(&mut self, repo: T) -> &mut Self
+    pub fn repo<T>(mut self, repo: T) -> Self
         where T: Into<String>
     {
         self.repo = repo.into();
@@ -47,7 +47,7 @@ impl RequestBuilder {
         self
     }
 
-    pub fn tag<T>(&mut self, tag: T) -> &mut Self
+    pub fn tag<T>(mut self, tag: T) -> Self
         where T: Into<String>
     {
         self.tag = tag.into();
@@ -55,7 +55,7 @@ impl RequestBuilder {
         self
     }
 
-    pub fn message<T>(&mut self, message: T) -> &mut Self
+    pub fn message<T>(mut self, message: T) -> Self
         where T: Into<String>
     {
         self.message = message.into();
@@ -63,7 +63,7 @@ impl RequestBuilder {
         self
     }
 
-    pub fn platform<T>(&mut self, platform: T) -> &mut Self
+    pub fn platform<T>(mut self, platform: T) -> Self
         where T: Into<String>
     {
         self.platform = platform.into();
@@ -71,17 +71,17 @@ impl RequestBuilder {
         self
     }
 
-    pub fn build(&self) -> Request {
+    pub fn build(self) -> Request {
         Request {
-            from_image: self.from_image.clone(),
-            from_src: self.from_src.clone(),
-            repo: self.repo.clone(),
+            from_image: self.from_image,
+            from_src: self.from_src,
+            repo: self.repo,
             tag: match self.tag.as_str() {
                 "" => String::from("latest"),
                 _=> self.tag.clone()
             },
-            message: self.message.clone(),
-            platform: self.platform.clone()
+            message: self.message,
+            platform: self.platform
         }
     }
 
@@ -105,28 +105,28 @@ pub struct Request {
 
 impl Request {
 
-    pub fn image(&self) -> String {
-        self.from_image.clone()
+    pub fn image(&self) -> &str {
+        &self.from_image
     }
 
-    pub fn source(&self) -> String {
-        self.from_src.clone()
+    pub fn source(&self) -> &str {
+        &self.from_src
     }
 
-    pub fn repo(&self) -> String {
-        self.repo.clone()
+    pub fn repo(&self) -> &str {
+        &self.repo
     }
 
-    pub fn tag(&self) -> String {
-        self.tag.clone()
+    pub fn tag(&self) -> &str {
+        &self.tag
     }
 
-    pub fn message(&self) -> String {
-        self.message.clone()
+    pub fn message(&self) -> &str {
+        &self.message
     }
 
-    pub fn platform(&self) -> String {
-        self.platform.clone()
+    pub fn platform(&self) -> &str {
+        &self.platform
     }
 
     pub fn get_path(&self) -> String {

@@ -31,29 +31,29 @@ impl IPAMConfigBuilder {
         IPAMConfigBuilder::default()
     }
 
-    pub fn ipv4_address(&mut self, address: String) -> &mut Self {
+    pub fn ipv4_address(mut self, address: String) -> Self {
         self.ipv4_address = address.clone();
 
         self
     }
 
-    pub fn ipv6_address(&mut self, address: String) -> &mut Self {
+    pub fn ipv6_address(mut self, address: String) -> Self {
         self.ipv6_address = address.clone();
 
         self
     }
 
-    pub fn add_local_ip(&mut self, address: String) -> &mut Self {
+    pub fn add_local_ip(mut self, address: String) -> Self {
         self.link_local_ips.push(address.clone());
 
         self
     }
 
-    pub fn build(&self) -> IPAMConfig {
+    pub fn build(self) -> IPAMConfig {
         IPAMConfig {
-            ipv4_address: self.ipv4_address.clone(),
-            ipv6_address: self.ipv6_address.clone(),
-            link_local_ips: self.link_local_ips.clone()
+            ipv4_address: self.ipv4_address,
+            ipv6_address: self.ipv6_address,
+            link_local_ips: self.link_local_ips
         }
     }
 

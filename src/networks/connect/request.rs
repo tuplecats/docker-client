@@ -18,7 +18,7 @@ impl RequestBuilder {
         builder
     }
 
-    pub fn container<T>(&mut self, name: T) -> &mut Self
+    pub fn container<T>(mut self, name: T) -> Self
         where T: Into<String>
     {
         self.container = name.into();
@@ -26,10 +26,10 @@ impl RequestBuilder {
         self
     }
 
-    pub fn build(&self) -> Request {
+    pub fn build(self) -> Request {
         Request {
-            id: self.id.clone(),
-            container: self.container.clone()
+            id: self.id,
+            container: self.container
         }
     }
 

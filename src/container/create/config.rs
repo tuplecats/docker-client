@@ -44,7 +44,7 @@ impl ConfigBuilder {
         ConfigBuilder::default()
     }
 
-    pub fn host_config(&mut self, cfg: HostConfig) -> &mut Self {
+    pub fn host_config(mut self, cfg: HostConfig) -> Self {
         self.host_config = Some(cfg);
 
         self
@@ -79,7 +79,7 @@ impl ConfigBuilder {
     ///     .hostname("example-hostname")
     ///     .build();
     /// ```
-    pub fn hostname<T>(&mut self, name: T) -> &mut Self
+    pub fn hostname<T>(mut self, name: T) -> Self
         where T: Into<String>
     {
         self.hostname = Some(name.into());
@@ -97,7 +97,7 @@ impl ConfigBuilder {
     ///     .domain_name("example-domainname")
     ///     .build();
     /// ```
-    pub fn domain_name<T>(&mut self, name: T) -> &mut Self
+    pub fn domain_name<T>(mut self, name: T) -> Self
         where T: Into<String>
     {
         self.domain_name = Some(name.into());
@@ -115,7 +115,7 @@ impl ConfigBuilder {
     ///     .user("example-user")
     ///     .build();
     /// ```
-    pub fn user<T>(&mut self, name: T) -> &mut Self
+    pub fn user<T>(mut self, name: T) -> Self
         where T: Into<String>
     {
         self.user = Some(name.into());
@@ -133,7 +133,7 @@ impl ConfigBuilder {
     ///     .attach_stdin(true)
     ///     .build();
     /// ```
-    pub fn attach_stdin(&mut self, b: bool) -> &mut Self {
+    pub fn attach_stdin(mut self, b: bool) -> Self {
         self.attach_stdin = Some(b);
 
         self
@@ -149,7 +149,7 @@ impl ConfigBuilder {
     ///     .attach_stdout(true)
     ///     .build();
     /// ```
-    pub fn attach_stdout(&mut self, b: bool) -> &mut Self {
+    pub fn attach_stdout(mut self, b: bool) -> Self {
         self.attach_stdout = Some(b);
 
         self
@@ -165,7 +165,7 @@ impl ConfigBuilder {
     ///     .attach_stderr(true)
     ///     .build();
     /// ```
-    pub fn attach_stderr(&mut self, b: bool) -> &mut Self {
+    pub fn attach_stderr(mut self, b: bool) -> Self {
         self.attach_stderr = Some(b);
 
         self
@@ -181,7 +181,7 @@ impl ConfigBuilder {
     ///     .expose_port("22/tcp")
     ///     .build();
     /// ```
-    pub fn expose_port<T>(&mut self, port: T) -> &mut Self
+    pub fn expose_port<T>(mut self, port: T) -> Self
         where T: Into<String>
     {
         self.exposed_ports.insert(port.into(), EmptyObject{});
@@ -199,7 +199,7 @@ impl ConfigBuilder {
     ///     .tty(true)
     ///     .build();
     /// ```
-    pub fn tty(&mut self, b: bool) -> &mut Self {
+    pub fn tty(mut self, b: bool) -> Self {
         self.tty = Some(b);
 
         self
@@ -215,7 +215,7 @@ impl ConfigBuilder {
     ///     .open_stdin(true)
     ///     .build();
     /// ```
-    pub fn open_stdin(&mut self, b: bool) -> &mut Self {
+    pub fn open_stdin(mut self, b: bool) -> Self {
         self.open_stdin = Some(b);
 
         self
@@ -231,7 +231,7 @@ impl ConfigBuilder {
     ///     .stdin_once(true)
     ///     .build();
     /// ```
-    pub fn stdin_once(&mut self, b: bool) -> &mut Self {
+    pub fn stdin_once(mut self, b: bool) -> Self {
         self.stdin_once = Some(b);
 
         self
@@ -247,7 +247,7 @@ impl ConfigBuilder {
     ///     .env("VAR=example-value")
     ///     .build();
     /// ```
-    pub fn env<T>(&mut self, env: T) -> &mut Self
+    pub fn env<T>(mut self, env: T) -> Self
         where T: Into<String>
     {
         self.env.push(env.into());
@@ -265,7 +265,7 @@ impl ConfigBuilder {
     ///     .cmd("example-cmd")
     ///     .build();
     /// ```
-    pub fn cmd<T>(&mut self, cmd: T) -> &mut Self
+    pub fn cmd<T>(mut self, cmd: T) -> Self
         where T: Into<String>
     {
         self.cmd.push(cmd.into());
@@ -274,7 +274,7 @@ impl ConfigBuilder {
     }
 
     /// Set `HealthCheck` for this container.
-    pub fn health_check(&mut self, health_check: Option<HealthCheck>) -> &mut Self {
+    pub fn health_check(mut self, health_check: Option<HealthCheck>) -> Self {
         self.health_check = health_check;
 
         self
@@ -285,7 +285,7 @@ impl ConfigBuilder {
     /// # Note
     ///
     /// Only for Windows.
-    pub fn args_escaped(&mut self, b: bool) -> &mut Self {
+    pub fn args_escaped(mut self, b: bool) -> Self {
         self.args_escaped = Some(b);
 
         self
@@ -301,7 +301,7 @@ impl ConfigBuilder {
     ///     .image("alpine")
     ///     .build();
     /// ```
-    pub fn image<T>(&mut self, image: T) -> &mut Self
+    pub fn image<T>(mut self, image: T) -> Self
         where T: Into<String>
     {
         self.image = Some(image.into());
@@ -319,7 +319,7 @@ impl ConfigBuilder {
     ///     .volume("/path/to/volume")
     ///     .build();
     /// ```
-    pub fn volume<T>(&mut self, volume: T) -> &mut Self
+    pub fn volume<T>(mut self, volume: T) -> Self
         where T: Into<String>
     {
         self.volumes.insert(volume.into(), EmptyObject{});
@@ -337,7 +337,7 @@ impl ConfigBuilder {
     ///     .work_dir("/path/to/work_dir")
     ///     .build();
     /// ```
-    pub fn work_dir<T>(&mut self, work_dir: T) -> &mut Self
+    pub fn work_dir<T>(mut self, work_dir: T) -> Self
         where T: Into<String>
     {
         self.work_dir = Some(work_dir.into());
@@ -355,7 +355,7 @@ impl ConfigBuilder {
     ///     .entry_point("example-entry-point")
     ///     .build();
     /// ```
-    pub fn entry_point<T>(&mut self, entry_point: T) -> &mut Self
+    pub fn entry_point<T>(mut self, entry_point: T) -> Self
         where T: Into<String>
     {
         self.entry_point.push(entry_point.into());
@@ -378,7 +378,7 @@ impl ConfigBuilder {
     ///     .network_disabled(true)
     ///     .build();
     /// ```
-    pub fn network_disabled(&mut self, b: bool) -> &mut Self {
+    pub fn network_disabled(mut self, b: bool) -> Self {
         self.network_disabled = Some(b);
 
         self
@@ -394,7 +394,7 @@ impl ConfigBuilder {
     ///     .mac_address("1A:2B:3C:4D:5E:6F")
     ///     .build();
     /// ```
-    pub fn mac_address<T>(&mut self, mac_address: T) -> &mut Self
+    pub fn mac_address<T>(mut self, mac_address: T) -> Self
         where T: Into<String>
     {
         self.mac_address = Some(mac_address.into());
@@ -412,7 +412,7 @@ impl ConfigBuilder {
     ///     .on_build("command-on-build")
     ///     .build();
     /// ```
-    pub fn on_build<T>(&mut self, cmd: T) -> &mut Self
+    pub fn on_build<T>(mut self, cmd: T) -> Self
         where T: Into<String>
     {
         self.on_build.push(cmd.into());
@@ -430,7 +430,7 @@ impl ConfigBuilder {
     ///     .label("example-label-key", "example-label-value")
     ///     .build();
     /// ```
-    pub fn label<T, U>(&mut self, k: T, v: U) -> &mut Self
+    pub fn label<T, U>(mut self, k: T, v: U) -> Self
         where
             T: Into<String>,
             U: Into<String>
@@ -450,7 +450,7 @@ impl ConfigBuilder {
     ///     .stop_signal("command")
     ///     .build();
     /// ```
-    pub fn stop_signal<T>(&mut self, stop_signal: T) -> &mut Self
+    pub fn stop_signal<T>(mut self, stop_signal: T) -> Self
         where T: Into<String>
     {
         self.stop_signal = Some(stop_signal.into());
@@ -469,7 +469,7 @@ impl ConfigBuilder {
     ///     .stop_timeout(Some(100))
     ///     .build();
     /// ```
-    pub fn stop_timeout(&mut self, time: Option<i32>) -> &mut Self {
+    pub fn stop_timeout(mut self, time: Option<i32>) -> Self {
         self.stop_timeout = time;
 
         self
@@ -486,7 +486,7 @@ impl ConfigBuilder {
     ///     .shell("shell-command-1")
     ///     .build();
     /// ```
-    pub fn shell<T>(&mut self, cmd: T) -> &mut Self
+    pub fn shell<T>(mut self, cmd: T) -> Self
         where T: Into<String>
     {
         self.shell.push(cmd.into());
@@ -494,7 +494,7 @@ impl ConfigBuilder {
         self
     }
 
-    pub fn network_config(&mut self, cfg: Option<NetworkSettings>) -> &mut Self {
+    pub fn network_config(mut self, cfg: Option<NetworkSettings>) -> Self {
         self.network_config = cfg;
 
         self
@@ -508,29 +508,29 @@ impl ConfigBuilder {
     /// # use docker_client::container::ConfigBuilder;
     /// let builder = ConfigBuilder::with_image("alpine").build();
     /// ```
-    pub fn build(&self) -> Config {
+    pub fn build(self) -> Config {
         Config {
-            hostname: self.hostname.clone(),
-            domain_name: self.domain_name.clone(),
-            user: self.user.clone(),
-            attach_stdin: self.attach_stdin.clone(),
-            attach_stdout: self.attach_stdout.clone(),
-            attach_stderr: self.attach_stderr.clone(),
-            exposed_ports: self.exposed_ports.clone(),
-            tty: self.tty.clone(),
-            open_stdin: self.open_stdin.clone(),
-            stdin_once: self.stdin_once.clone(),
-            env: self.env.clone(),
-            labels: self.labels.clone(),
-            cmd: self.cmd.clone(),
-            entry_point: self.entry_point.clone(),
-            image: self.image.clone(),
-            volumes: self.volumes.clone(),
-            health_check: self.health_check.clone(),
-            work_dir: self.work_dir.clone(),
-            network_disabled: self.network_disabled.clone(),
-            network_config: self.network_config.clone(),
-            host_config: self.host_config.clone()
+            hostname: self.hostname,
+            domain_name: self.domain_name,
+            user: self.user,
+            attach_stdin: self.attach_stdin,
+            attach_stdout: self.attach_stdout,
+            attach_stderr: self.attach_stderr,
+            exposed_ports: self.exposed_ports,
+            tty: self.tty,
+            open_stdin: self.open_stdin,
+            stdin_once: self.stdin_once,
+            env: self.env,
+            labels: self.labels,
+            cmd: self.cmd,
+            entry_point: self.entry_point,
+            image: self.image,
+            volumes: self.volumes,
+            health_check: self.health_check,
+            work_dir: self.work_dir,
+            network_disabled: self.network_disabled,
+            network_config: self.network_config,
+            host_config: self.host_config
         }
     }
 }

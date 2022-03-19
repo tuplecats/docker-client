@@ -40,7 +40,7 @@ impl RequestBuilder {
         builder
     }
 
-    pub fn add_command<T>(&mut self, command: T) -> &mut Self
+    pub fn add_command<T>(mut self, command: T) -> Self
         where T: Into<String>
     {
         self.cmd.push(command.into());
@@ -48,13 +48,13 @@ impl RequestBuilder {
         self
     }
 
-    pub fn add_commands(&mut self, mut commands: Vec<String>) -> &mut Self {
+    pub fn add_commands(mut self, mut commands: Vec<String>) -> Self {
         self.cmd.append(&mut commands);
 
         self
     }
 
-    pub fn user<T>(&mut self, user: T) -> &mut Self
+    pub fn user<T>(mut self, user: T) -> Self
         where T: Into<String>
     {
         self.user = user.into();
@@ -62,29 +62,29 @@ impl RequestBuilder {
         self
     }
     
-    pub fn attach_stdin(&mut self, v: bool) -> &mut Self {
+    pub fn attach_stdin(mut self, v: bool) -> Self {
         self.attach_stdin = v;
         
         self
     }
 
-    pub fn attach_stdout(&mut self, v: bool) -> &mut Self {
+    pub fn attach_stdout(mut self, v: bool) -> Self {
         self.attach_stdout = v;
 
         self
     }
 
-    pub fn attach_stderr(&mut self, v: bool) -> &mut Self {
+    pub fn attach_stderr(mut self, v: bool) -> Self {
         self.attach_stderr = v;
 
         self
     }
 
-    pub fn build(&self) -> Request {
+    pub fn build(self) -> Request {
         Request {
-            id: self.id.clone(),
-            cmd: self.cmd.clone(),
-            user: self.user.clone(),
+            id: self.id,
+            cmd: self.cmd,
+            user: self.user,
             attach_stdin: self.attach_stdin,
             attach_stderr: self.attach_stderr,
             attach_stdout: self.attach_stdout

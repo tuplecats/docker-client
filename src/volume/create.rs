@@ -43,7 +43,7 @@ impl VolumeCreatorBuilder {
     }
 
     /// Set name
-    pub fn name<T>(&mut self, name: T) -> &mut Self
+    pub fn name<T>(mut self, name: T) -> Self
         where T: Into<String>
     {
         self.name = name.into();
@@ -52,7 +52,7 @@ impl VolumeCreatorBuilder {
     }
 
     /// Set driver
-    pub fn driver<T>(&mut self, driver: T) -> &mut Self
+    pub fn driver<T>(mut self, driver: T) -> Self
         where T: Into<String>
     {
         self.driver = driver.into();
@@ -61,7 +61,7 @@ impl VolumeCreatorBuilder {
     }
 
     /// Add driver option
-    pub fn driver_opt<T, U>(&mut self, key: T, value: U) -> &mut Self
+    pub fn driver_opt<T, U>(mut self, key: T, value: U) -> Self
         where
             T: Into<String>,
             U: Into<String>
@@ -72,7 +72,7 @@ impl VolumeCreatorBuilder {
     }
 
     /// Add label
-    pub fn label<T, U>(&mut self, key: T, value: U) -> &mut Self
+    pub fn label<T, U>(mut self, key: T, value: U) -> Self
         where
             T: Into<String>,
             U: Into<String>
@@ -83,12 +83,12 @@ impl VolumeCreatorBuilder {
     }
 
     /// Build VolumeCreator
-    pub fn build(&self) -> VolumeCreator {
+    pub fn build(self) -> VolumeCreator {
         VolumeCreator {
-            name: self.name.clone(),
-            driver: self.driver.clone(),
-            driver_opts: self.driver_opts.clone(),
-            labels: self.labels.clone(),
+            name: self.name,
+            driver: self.driver,
+            driver_opts: self.driver_opts,
+            labels: self.labels,
         }
     }
 }

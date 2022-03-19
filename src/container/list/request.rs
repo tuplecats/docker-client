@@ -18,36 +18,36 @@ impl RequestBuilder {
         RequestBuilder::default()
     }
 
-    pub fn all(&mut self, v: bool) -> &mut Self {
+    pub fn all(mut self, v: bool) -> Self {
         self.all = Some(v);
 
         self
     }
 
-    pub fn limit(&mut self, v: i32) -> &mut Self {
+    pub fn limit(mut self, v: i32) -> Self {
         self.limit = Some(v);
 
         self
     }
 
-    pub fn size(&mut self, v: bool) -> &mut Self {
+    pub fn size(mut self, v: bool) -> Self {
         self.size = Some(v);
 
         self
     }
 
-    pub fn filters(&mut self, f: Filters) -> &mut Self {
+    pub fn filters(mut self, f: Filters) -> Self {
         self.filters = f;
 
         self
     }
 
-    pub fn build(&self) -> Request {
+    pub fn build(self) -> Request {
         Request {
-            all: self.all.clone(),
-            limit: self.limit.clone(),
-            size: self.size.clone(),
-            filters: self.filters.clone()
+            all: self.all,
+            limit: self.limit,
+            size: self.size,
+            filters: self.filters
         }
     }
 

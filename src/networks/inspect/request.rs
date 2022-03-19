@@ -21,7 +21,7 @@ impl Default for RequestBuilder {
 
 impl RequestBuilder {
 
-    pub fn with_name<T>(&mut self, id: T) -> Self
+    pub fn with_name<T>(id: T) -> Self
         where T: Into<String>
     {
         let mut builder = RequestBuilder::default();
@@ -29,11 +29,11 @@ impl RequestBuilder {
         builder
     }
 
-    pub fn build(&self) -> Request {
+    pub fn build(self) -> Request {
         Request {
-            id: self.id.clone(),
+            id: self.id,
             verbose: self.verbose,
-            scope: self.scope.clone()
+            scope: self.scope
         }
     }
 

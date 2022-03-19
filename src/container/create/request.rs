@@ -19,7 +19,7 @@ impl CreateBuilder {
         }
     }
 
-    pub fn name<T>(&mut self, v: T) -> &mut Self
+    pub fn name<T>(mut self, v: T) -> Self
         where T: Into<String>
     {
         self.name = v.into();
@@ -27,16 +27,16 @@ impl CreateBuilder {
         self
     }
 
-    pub fn config(&mut self, cfg: Config) -> &mut Self {
+    pub fn config(mut self, cfg: Config) -> Self {
         self.config = cfg;
 
         self
     }
 
-    pub fn build(&self) -> Create {
+    pub fn build(self) -> Create {
         Create {
-            name: self.name.clone(),
-            config: self.config.clone()
+            name: self.name,
+            config: self.config
         }
     }
 }

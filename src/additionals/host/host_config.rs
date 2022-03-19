@@ -31,7 +31,7 @@ impl HostConfigBuilder {
         HostConfigBuilder::default()
     }
 
-    pub fn bind_port(&mut self, container_port: String, host_ip: Option<String>, host_port: String) -> &mut Self {
+    pub fn bind_port(mut self, container_port: String, host_ip: Option<String>, host_port: String) -> Self {
         match self.port_bindings.contains_key(&container_port) {
             true => { self.port_bindings.get_mut(&container_port).unwrap().push(PortBinding {host_ip, host_port}); }
             false => { self.port_bindings.insert(container_port, vec![PortBinding { host_ip, host_port }]); }
@@ -40,7 +40,7 @@ impl HostConfigBuilder {
         self
     }
 
-    pub fn mount(&mut self, host_path: String, container_path: String, read_only: bool) -> &mut Self {
+    pub fn mount(mut self, host_path: String, container_path: String, read_only: bool) -> Self {
         let method = match read_only {
             true => "ro",
             false => "rw"
@@ -51,23 +51,23 @@ impl HostConfigBuilder {
         self
     }
 
-    pub fn sysctl(&mut self, k: String, value: String) -> &mut Self {
+    pub fn sysctl(mut self, k: String, value: String) -> Self {
         self.sysctls.insert(k, value);
 
         self
     }
 
-    pub fn auto_remove(&mut self, b: bool) -> &mut Self {
+    pub fn auto_remove(mut self, b: bool) -> Self {
         self.auto_remove = Some(b);
 
         self
     }
 
-    pub fn build(&self) -> HostConfig {
+    pub fn build(self) -> HostConfig {
         HostConfig {
-            binds: self.binds.clone(),
-            port_bindings: self.port_bindings.clone(),
-            sysctls: self.sysctls.clone(),
+            binds: self.binds,
+            port_bindings: self.port_bindings,
+            sysctls: self.sysctls,
             auto_remove: self.auto_remove.unwrap_or(false)
         }
     }

@@ -21,7 +21,8 @@
 //! use docker_client::DockerClient;
 //! use docker_client::Killer;
 //!
-//! fn main() {
+//! #[tokio::main]
+//! async fn main() {
 //!     let client = DockerClient::new();
 //!
 //!     let killer = Killer::new()
@@ -29,7 +30,7 @@
 //!         .signal("SIGNAL")
 //!         .build();
 //!
-//!     match client.kill_container(killer) {
+//!     match client.kill_container(killer).await {
 //!         Ok(_) => {},
 //!         Err(_) => {},
 //!     }
@@ -101,7 +102,7 @@ impl KillerBuilder {
     ///     .id("example-id-or-name")
     ///     .build();
     /// ```
-    pub fn id<T>(&mut self, id: T) -> &mut KillerBuilder
+    pub fn id<T>(mut self, id: T) -> Self
         where T: Into<String>
     {
         self.id = id.into();
@@ -119,7 +120,7 @@ impl KillerBuilder {
     ///     .signal("SIGNAL")
     ///     .build();
     /// ```
-    pub fn signal<T>(&mut self, signal: T) -> &mut KillerBuilder
+    pub fn signal<T>(mut self, signal: T) -> Self
         where T: Into<String>
     {
         self.signal = Some(signal.into());
@@ -135,10 +136,10 @@ impl KillerBuilder {
     /// # use docker_client::container::KillerBuilder;
     /// let builder = KillerBuilder::new().build();
     /// ```
-    pub fn build(&self) -> Killer {
+    pub fn build(self) -> Killer {
         Killer {
-            id: self.id.clone(),
-            signal: self.signal.clone()
+            id: self.id,
+            signal: self.signal
         }
     }
 }

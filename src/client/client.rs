@@ -218,15 +218,17 @@ impl DockerClient {
     /// # Examples
     ///
     /// ```rust
+    /// extern crate tokio;
     /// use docker_client::DockerClient;
     /// use docker_client::container::{Create, Config};
     ///
-    /// fn main() {
+    /// #[tokio::main]
+    /// async fn main() {
     ///
     ///    let client = DockerClient::new();
     ///
     ///     let config = Create::new().config(Config::with_image("alpine").build()).name("hi").build();
-    ///     match client.create_container(config) {
+    ///     match client.create_container(config).await {
     ///         Ok(_) => {}
     ///         Err(_) => {}
     ///     }
@@ -265,10 +267,11 @@ impl DockerClient {
     /// ```rust
     /// use docker_client::DockerClient;
     ///
-    /// fn main() {
+    /// # #[tokio::main]
+    /// async fn main() {
     ///    let client = DockerClient::new();
     ///
-    ///     let changes = client.get_fs_changes("test").unwrap_or(Vec::new());
+    ///     let changes = client.get_fs_changes("test").await.unwrap_or(Vec::new());
     ///
     ///     for change in &changes {
     ///         println!("{:?}", change);
@@ -310,10 +313,11 @@ impl DockerClient {
     /// ```rust
     /// use docker_client::{DockerClient, DockerError};
     ///
-    /// fn main() {
+    /// # #[tokio::main]
+    /// async fn main() {
     ///    let client = DockerClient::new();
     ///
-    ///     match client.start_container("test", "-d") {
+    ///     match client.start_container("test", "-d").await {
     ///         Ok(_) => {},
     ///         Err(e) => {
     ///             match e {
@@ -362,10 +366,11 @@ impl DockerClient {
     /// ```rust
     /// use docker_client::{DockerClient, DockerError};
     ///
-    /// fn main() {
+    /// # #[tokio::main]
+    /// async fn main() {
     ///    let client = DockerClient::new();
     ///
-    ///     match client.stop_container("test", Some(12)) {
+    ///     match client.stop_container("test", Some(12)).await {
     ///         Ok(_) => {},
     ///         Err(e) => {
     ///             match e {
@@ -411,10 +416,11 @@ impl DockerClient {
     /// ```rust
     /// use docker_client::{DockerClient, DockerError};
     ///
-    /// fn main() {
+    /// # #[tokio::main]
+    /// async fn main() {
     ///    let client = DockerClient::new();
     ///
-    ///     match client.pause_container("test") {
+    ///     match client.pause_container("test").await {
     ///         Ok(_) => {},
     ///         Err(e) => {
     ///             match e {
@@ -458,10 +464,11 @@ impl DockerClient {
     /// ```rust
     /// use docker_client::{DockerClient, DockerError};
     ///
-    /// fn main() {
+    /// # #[tokio::main]
+    /// async fn main() {
     ///    let client = DockerClient::new();
     ///
-    ///     match client.unpause_container("test") {
+    ///     match client.unpause_container("test").await {
     ///         Ok(_) => {},
     ///         Err(e) => {
     ///             match e {
@@ -505,10 +512,11 @@ impl DockerClient {
     /// ```rust
     /// use docker_client::{DockerClient, DockerError};
     ///
-    /// fn main() {
+    /// # #[tokio::main]
+    /// async fn main() {
     ///    let client = DockerClient::new();
     ///
-    ///     match client.rename_container("test", "test1") {
+    ///     match client.rename_container("test", "test1").await {
     ///         Ok(_) => {},
     ///         Err(e) => {
     ///             match e {
@@ -554,8 +562,8 @@ impl DockerClient {
     /// ```rust
     /// use docker_client::{DockerClient, DockerError};
     /// use docker_client::container::Killer;
-    ///
-    /// fn main() {
+    /// # #[tokio::main]
+    /// async fn main() {
     ///
     ///    let client = DockerClient::new();
     ///
@@ -563,7 +571,7 @@ impl DockerClient {
     ///         .id("test")
     ///         .build();
     ///
-    ///     match client.kill_container(killer) {
+    ///     match client.kill_container(killer).await {
     ///         Ok(_) => {}
     ///         Err(e) => {
     ///             match e {
@@ -609,7 +617,8 @@ impl DockerClient {
     /// use docker_client::{DockerClient, DockerError};
     /// use docker_client::container::Remover;
     ///
-    /// fn main() {
+    /// # #[tokio::main]
+    /// async fn main() {
     ///
     ///    let client = DockerClient::new();
     ///
@@ -618,7 +627,7 @@ impl DockerClient {
     ///         .with_remove_volumes(true)
     ///         .build();
     ///
-    ///     match client.remove_container(remover) {
+    ///     match client.remove_container(remover).await {
     ///         Ok(_) => {}
     ///         Err(e) => {
     ///             match e {
@@ -667,12 +676,12 @@ impl DockerClient {
     /// ```rust
     /// use docker_client::{DockerClient, DockerError};
     /// use docker_client::container::inspect::Inspect;
-    ///
-    /// fn main() {
+    /// # #[tokio::main]
+    /// async fn main() {
     ///
     ///    let client = DockerClient::new();
     ///
-    ///     match client.inspect_container(Inspect::container("vigilant_antonelli".to_string())) {
+    ///     match client.inspect_container(Inspect::container("vigilant_antonelli".to_string())).await {
     ///         Ok(s) => { println!("{:?}", s) }
     ///         Err(e) => {}
     ///     }
@@ -712,10 +721,11 @@ impl DockerClient {
     ///
     /// ```rust
     /// # use docker_client::{DockerClient, DockerError};
-    /// fn main() {
+    /// # #[tokio::main]
+    /// async fn main() {
     ///    let client = DockerClient::new();
     ///
-    ///     match client.get_container_log("test-container") {
+    ///     match client.get_container_log("test-container").await {
     ///         Ok(log) => { println!("Log: {}", log); }
     ///         Err(e) => { println!("Error: {:?}", e); }
     ///     }
@@ -757,10 +767,11 @@ impl DockerClient {
     /// ```rust
     /// # use docker_client::{DockerClient, DockerError};
     /// # use docker_client::container::WaitCondition;
-    /// fn main() {
+    /// # #[tokio::main]
+    /// async fn main() {
     ///    let client = DockerClient::new();
     ///
-    ///     match client.wait_container("test-container", WaitCondition::NotRunning) {
+    ///     match client.wait_container("test-container", WaitCondition::NotRunning).await {
     ///         Ok(status) => { println!("Status: {:?}", status); }
     ///         Err(e) => { println!("Error: {:?}", e); }
     ///     }
@@ -799,14 +810,16 @@ impl DockerClient {
     /// ```rust
     /// # use docker_client::{DockerClient, DockerError};
     /// # use std::path::Path;
-    /// fn main() {
+    ///
+    /// # #[tokio::main]
+    /// async fn main() {
     ///    let client = DockerClient::new();
     ///
     ///     let mut path = std::env::temp_dir();
     ///     path.push("export_container");
     ///     path.set_extension("tar");
     ///
-    ///     match client.export_container("test-container", path.as_path()) {
+    ///     match client.export_container("test-container", path.as_path()).await {
     ///         Ok(_) => {},
     ///         Err(e) => { println!("Error: {:?}", e); },
     ///     }
@@ -844,10 +857,11 @@ impl DockerClient {
     ///
     /// ```rust
     /// # use docker_client::{DockerClient, DockerError};
-    /// fn main() {
+    /// # #[tokio::main]
+    /// async fn main() {
     ///    let client = DockerClient::new();
     ///
-    ///     match client.get_image_list() {
+    ///     match client.get_image_list().await {
     ///         Ok(list) => { println!("{:?}", list); },
     ///         Err(e) => { println!("Error: {:?}", e); },
     ///     }
@@ -881,16 +895,19 @@ impl DockerClient {
     /// # Examples
     ///
     /// ```rust
+    /// # extern crate tokio;
     /// # use docker_client::{DockerClient, DockerError};
     /// # use docker_client::volume::VolumeCreator;
-    /// fn main() {
+    ///
+    /// # #[tokio::main]
+    /// async fn main() {
     ///    let client = DockerClient::new();
     ///
     ///     let creator = VolumeCreator::builder()
     ///         .name("test")
     ///         .build();
     ///
-    ///     match client.create_volume(creator) {
+    ///     match client.create_volume(creator).await {
     ///         Ok(_) => {},
     ///         Err(e) => { println!("Error: {:?}", e); },
     ///     }
@@ -927,10 +944,11 @@ impl DockerClient {
     ///
     /// ```rust
     /// # use docker_client::{DockerClient, DockerError};
-    /// fn main() {
+    /// # #[tokio::main]
+    /// async fn main() {
     ///    let client = DockerClient::new();
     ///
-    ///     match client.inspect_volume("test") {
+    ///     match client.inspect_volume("test").await {
     ///         Ok(info) => { println!("{:?}", info); },
     ///         Err(e) => { println!("Error: {:?}", e); },
     ///     }
@@ -970,10 +988,11 @@ impl DockerClient {
     ///
     /// ```rust
     /// # use docker_client::{DockerClient, DockerError};
-    /// fn main() {
+    /// # #[tokio::main]
+    /// async fn main() {
     ///    let client = DockerClient::new();
     ///
-    ///     match client.remove_volume("test", false) {
+    ///     match client.remove_volume("test", false).await {
     ///         Ok(_) => {},
     ///         Err(e) => { println!("Error: {:?}", e); },
     ///     }
@@ -1009,11 +1028,14 @@ impl DockerClient {
     /// # Examples
     ///
     /// ```rust
+    /// # extern crate tokio;
     /// # use docker_client::{DockerClient, DockerError};
-    /// fn main() {
+    ///
+    /// # #[tokio::main]
+    /// async fn main() {
     ///    let client = DockerClient::new();
     ///
-    ///     match client.delete_unused_volumes() {
+    ///     match client.delete_unused_volumes().await {
     ///         Ok(_) => {},
     ///         Err(e) => { println!("Error: {:?}", e); },
     ///     }
@@ -1046,10 +1068,11 @@ impl DockerClient {
     ///
     /// ```rust
     /// # use docker_client::{DockerClient, DockerError};
-    /// fn main() {
+    /// # #[tokio::main]
+    /// async fn main() {
     ///    let client = DockerClient::new();
     ///
-    ///     match client.get_volumes_list() {
+    ///     match client.get_volumes_list().await {
     ///         Ok(list) => { println!("{:?}", list); },
     ///         Err(e) => { println!("Error: {:?}", e); },
     ///     }

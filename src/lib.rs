@@ -9,7 +9,8 @@
 //! use docker_client::DockerClient;
 //! use docker_client::container::{Config, Create};
 //!
-//! fn main() {
+//! #[tokio::main]
+//! async fn main() {
 //!     // Create docker client
 //!     let client = DockerClient::new();
 //!
@@ -20,18 +21,21 @@
 //!     .build();
 //!
 //!     // Create container
-//!     match client.create_container(request) {
+//!     match client.create_container(request).await {
 //!         Ok(_) => {},
 //!         Err(_) => {}
 //!     };
 //!
 //!     // Rename container
-//!     match client.rename_container("test", "test1") {
+//!     match client.rename_container("test", "test1").await {
 //!         Ok(_) => {},
 //!         Err(_) => {}
 //!     }
 //! }
 //! ```
+
+//#![deny(warnings)]
+
 #[cfg(test)]
 #[macro_use]
 extern crate doc_comment;

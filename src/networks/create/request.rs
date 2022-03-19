@@ -27,7 +27,7 @@ impl IPAMBuilder {
         IPAMBuilder::default()
     }
 
-    pub fn driver<T>(&mut self, v: T) -> &mut Self
+    pub fn driver<T>(mut self, v: T) -> Self
         where T: Into<String>
     {
         self.driver = v.into();
@@ -35,13 +35,13 @@ impl IPAMBuilder {
         self
     }
 
-    pub fn add_config(&mut self, map: HashMap<String, String>) -> &mut Self {
+    pub fn add_config(mut self, map: HashMap<String, String>) -> Self {
         self.config.push(map);
 
         self
     }
 
-    pub fn add_option<T, U>(&mut self, k: T, v: U) -> &mut Self
+    pub fn add_option<T, U>(mut self, k: T, v: U) -> Self
         where
             T: Into<String>,
             U: Into<String>
@@ -51,11 +51,11 @@ impl IPAMBuilder {
         self
     }
 
-    pub fn build(&self) -> IPAM {
+    pub fn build(self) -> IPAM {
         IPAM {
-            driver: self.driver.clone(),
-            config: self.config.clone(),
-            options: self.options.clone()
+            driver: self.driver,
+            config: self.config,
+            options: self.options
         }
     }
     

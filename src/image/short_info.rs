@@ -40,23 +40,23 @@ pub struct ShortImageInfo {
 impl ShortImageInfo {
 
     /// Return id of image
-    pub fn id(&self) -> String {
-        self.id.clone()
+    pub fn id(&self) -> &str {
+        &self.id
     }
 
     /// Return parent id
-    pub fn parent_id(&self) -> String {
-        self.parent_id.clone()
+    pub fn parent_id(&self) -> &str {
+        &self.parent_id
     }
 
     /// Return repo tags
-    pub fn repo_tags(&self) -> Vec<String> {
-        self.repo_tags.clone()
+    pub fn repo_tags(&self) -> &Vec<String> {
+        &self.repo_tags
     }
 
     /// Return repo digests
-    pub fn repo_digests(&self) -> Vec<String> {
-        self.repo_digests.clone()
+    pub fn repo_digests(&self) -> &Vec<String> {
+        &self.repo_digests
     }
 
     /// Return created
@@ -80,8 +80,8 @@ impl ShortImageInfo {
     }
 
     /// Return labels
-    pub fn labels(&self) -> HashMap<String, String> {
-        self.labels.clone()
+    pub fn labels(&self) -> &HashMap<String, String> {
+        &self.labels
     }
 
     /// Return count of containers with this image

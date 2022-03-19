@@ -18,7 +18,8 @@
 //! use docker_client::container::Create;
 //! use docker_client::container::HealthCheck;
 //!
-//! fn main() {
+//! #[tokio::main]
+//! async fn main() {
 //!     let client = DockerClient::new();
 //!
 //!     let health_check = HealthCheck::new().test("echo test").build();
@@ -30,7 +31,7 @@
 //!                 .build()
 //!         ).build();
 //!
-//!     match client.create_container(request) {
+//!     match client.create_container(request).await {
 //!         Ok(container) => { println!("{:?}", container); },
 //!         Err(_) => {},
 //!     }
@@ -85,7 +86,7 @@ impl HealthCheckBuilder {
     ///     .test("test-command")
     ///     .build();
     /// ```
-    pub fn test<T>(&mut self, cmd: T) -> &mut Self
+    pub fn test<T>(mut self, cmd: T) -> Self
         where T: Into<String>
     {
         self.test.push(cmd.into());
@@ -103,7 +104,7 @@ impl HealthCheckBuilder {
     ///     .interval(Some(1000))
     ///     .build();
     /// ```
-    pub fn interval(&mut self, interval: Option<u64>) -> &mut Self {
+    pub fn interval(mut self, interval: Option<u64>) -> Self {
         self.interval = interval;
 
         self
@@ -119,7 +120,7 @@ impl HealthCheckBuilder {
     ///     .timeout(Some(1000))
     ///     .build();
     /// ```
-    pub fn timeout(&mut self, interval: Option<u64>) -> &mut Self {
+    pub fn timeout(mut self, interval: Option<u64>) -> Self {
         self.timeout = interval;
 
         self
@@ -135,7 +136,7 @@ impl HealthCheckBuilder {
     ///     .retries(Some(3))
     ///     .build();
     /// ```
-    pub fn retries(&mut self, interval: Option<u64>) -> &mut Self {
+    pub fn retries(mut self, interval: Option<u64>) -> Self {
         self.retries = interval;
 
         self
@@ -151,7 +152,7 @@ impl HealthCheckBuilder {
     ///     .start_period(Some(1000))
     ///     .build();
     /// ```
-    pub fn start_period(&mut self, interval: Option<u64>) -> &mut Self {
+    pub fn start_period(mut self, interval: Option<u64>) -> Self {
         self.start_period = interval;
 
         self
@@ -165,13 +166,13 @@ impl HealthCheckBuilder {
     /// # use docker_client::container::HealthCheck;
     /// let builder = HealthCheck::new().build();
     /// ```
-    pub fn build(&self) -> HealthCheck {
+    pub fn build(self) -> HealthCheck {
         HealthCheck {
-            test: self.test.clone(),
-            interval: self.interval.clone(),
-            timeout: self.timeout.clone(),
-            retries: self.retries.clone(),
-            start_period: self.start_period.clone()
+            test: self.test,
+            interval: self.interval,
+            timeout: self.timeout,
+            retries: self.retries,
+            start_period: self.start_period
         }
     }
 }

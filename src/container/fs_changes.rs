@@ -13,8 +13,8 @@ pub struct FSChanges {
 impl FSChanges {
 
     /// Return path
-    pub fn path(&self) -> String {
-        self.path.clone()
+    pub fn path(&self) -> &str {
+        self.path.as_str()
     }
 
     /// Return kind
